@@ -1,0 +1,22 @@
+class Solution {
+    // 1. 宣告起始點   start
+    // 2. 宣告最大長度 maxlen
+    // 3. 建立 Map 紀錄字元位置 Map<Character , Integer> map = new HashMap<>();
+    // 4. for -> String s
+    // 5. 當 map 有重複字串時 , 更新起始點 = 最大起始點
+    // 6. 更新最大長度 , 紀錄map 
+    public int lengthOfLongestSubstring(String s) {
+      int start  = 0;
+      int maxlen = 0;
+      int len = s.length();
+      Map<Character , Integer> map = new HashMap<>();
+      for(int i=0; i<len ; i++){
+        if(map.containsKey(s.charAt(i))){
+          start = Math.max(start , map.get(s.charAt(i))+1 );
+        }
+        maxlen = Math.max(maxlen,i-start+1);
+        map.put(s.charAt(i) , i);
+      }
+        return maxlen;
+    }
+}

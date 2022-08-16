@@ -1,0 +1,51 @@
+class Solution {
+    // 中心擴散法
+    // 1. 遍歷每個字元 , 已字元設為中心 , 利用回文串特性[中心對稱]向外擴展
+	// 2. 偶數[中心為中間兩字符] / 奇數[中心為中間單字符]
+    // 由題目可以得知字串長不可 < 2 故直接回傳
+    // 宣告初始最長 maxlen = 0 紀錄最長
+    // 宣告 int[2] res 紀錄起始點與結點
+    // for 字串
+    //  帶入驗證方法 一號組 i , i
+    //  帶入驗證方法 比較組 i , i+1 // 多看一格數
+    //  將較大組別放入 max[] 紀錄   // 因起點相同看結點
+    //  如果結點 > maxlen 更新最長度
+    //  更新紀錄 res = max;
+    // 回傳 s.substring(res[0],res[1]+res[0]) substring(index,index-1); 所以要加上起點
+
+    // 驗證方法實作 int[] vaildate(字串 , 左數(目前回圈位置) , 右數(目前回圈位置)) : 
+    // 當 左數 > 0 和 右數 < len 為正常
+    // 如果 s.charAt(左數) = s.charAt(右數); // 回文字串最左必等於最右
+    //  true        -> 往外去檢查  <-左  右->
+    //  else(flase) -> break; 直接離開 while 回圈
+    // 回傳 new int[] {左數+1 , 右數-左數-1} // 防止無異議的中心點 左=0 , 右 = len
+   
+    public String longestPalindrome(String s) {
+      int len = s.length();
+      if(len < 2) return s;
+      int maxlen =0;
+      int[] res = new int[2];
+      for(int i=0;i<len;i++){
+        int[] odd  = vaildate(s,i,i);
+        int[] even = vaildate(s,i,i+1);
+        int[] max  = odd[1] > even[1] ? odd : even; 
+        if(max[1] > maxlen){
+           maxlen = max[1];
+           res = max;
+        }
+      }
+       return s.substring(res[0] , res[1] + res[0]);
+    }
+    public int[] vaildate(String s , int left , int right){
+      int len = s.length();
+      while(left>=0 && right < len){
+         if(s.charAt(left)== s.charAt(right)){
+             left--;
+             right++;
+         }else{
+             break;
+         }
+      }    
+      return new int[]{left+1 , right - left -1};
+    }
+}

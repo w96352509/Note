@@ -1,0 +1,20 @@
+class Solution {
+    // 題目得知要回傳 index , 所以得知要用值找index , 回傳格式 [紀錄位置 , 當前]
+    // 1. 準備 int[] 裝取結果
+    // 2. 準備 Map 蒐集 nums 的資料 -> key:值 , value: index , 取 value = map.get()
+    // 3. 使用 for loop 找指定條件 target = nums[i] + nums[map紀錄] , nums[map紀錄] = target-nums[i]  
+    // 4. 如符 : 回傳格式 [紀錄位置 , 當前] 將對應值放入 map.value , i
+    public int[] twoSum(int[] nums, int target) {
+      int[] num = new int[2]; 
+      Map<Integer , Integer> map = new HashMap<>();
+      int len = nums.length;
+      for(int i=0 ; i<len ; i++){
+        if(map.containsKey(target-nums[i])){
+            num[0] = map.get(target-nums[i]);
+            num[1] = i;
+        }
+          map.put(nums[i] , i); // 值 , 位置
+      }
+      return num;
+    }
+}

@@ -1,0 +1,54 @@
+class Solution {
+// 將較短的數組為第一個數組使用(合併 = 短 + 長)
+// 需判斷數組長度為奇或偶
+// 如為偶數可在中間劃分 , 左為最大值 , 右為最小值
+// 如為奇數可在中間劃分 , 左邊多一數 , 那數為中間數
+// 分切後左邊數總和 <= 右邊數值總和 
+// 分割第一數組的左邊的最大值 <=  分割第二數組的右邊的最小值 
+// 分割第一數組的右邊的最小值 >   分割第二數組的左邊的最大值
+
+// 條件1 : 所以左邊總數必多右邊一數(totalLeft) : m+n+1/2
+// 條件2 : 右邊線不可小於左邊線則當右邊線大於左邊線時 , 左邊起始值 =  0 , 右邊 = 長度 [0.m]
+//         取中間值為第1分隔線 = 起(leaf) + (right - leaf + 1)/2 // +1防止死循環(主防範 right = 1) 
+//                  第2分隔線 = 第1分隔線 -1 ;
+// 縮小區間 : 第1分隔線的左數最大值(第1分隔線-1) 要小於 第2分隔線右最小值
+//           當 第1分隔線-1數 > 第2分隔線右最小值 = 邊線太靠右(上限不正常調整上限(right))
+//           正常則取中間數當底(上限正常不調整上限取底(leaf))
+// 重新定義底線為數列數量 -> 陣列1左數量(i) = leaf , 陣列2左數量(j) = totalLeft - leaf
+// 當陣列1左數量(i) = 0 取 Integer.MIN_VALUE 則取 左邊數 i-1  / 當陣列1左數量(i) = 長度 取 Integer.MAX_VALUE 則取 左邊數 i   
+// 當陣列2左數量(i) = 0 取 Integer.MIN_VALUE 則取 左邊數 j-1  / 當陣列1左數量(j) = 長度 取 Integer.MAX_VALUE 則取 左邊數 j   
+// 奇 -> 找左最大
+// 偶 -> 取 double 最大(左) + 最小(右) / 2
+public double findMedianSortedArrays(int[] nums1, int[] nums2) {
+       // 整理較短數列為主數列(右)
+       if(nums1.length > nums2.length){
+         int[] temp = nums1;
+         nums1 = nums2;
+         nums2 = temp; 
+       }
+       int m = nums1.length;
+       int n = nums2.length;
+       int right = m;
+       int left = 0;
+       int totalLeft = (m+n+1)/2;
+       while(right > left){
+         int i = left + (right-left+1)/2;  
+         int j = totalLeft - i;
+         if(nums1[i-1] > nums2[j] ){
+            right = i -1;
+         }else{
+             left = i;
+         }
+    }
+         int i = left; 
+         int j = totalLeft - i;
+         int nums1leftMax  = i ==0?Integer.MIN_VALUE:nums1[i-1];
+         int nums1RightMin = i ==m?Integer.MAX_VALUE:nums1[i];
+         int nums2leftMax  = j ==0?Integer.MIN_VALUE:nums2[j-1];
+         int nums2RightMin = j ==n?Integer.MAX_VALUE:nums2[j]; 
+         if((m+n)%2==0){
+            return (double)(Math.max(nums1leftMax , nums2leftMax)+Math.min(nums1RightMin , nums2RightMin))/2;
+         }
+            return Math.max(nums1leftMax,nums2leftMax);
+       }
+}

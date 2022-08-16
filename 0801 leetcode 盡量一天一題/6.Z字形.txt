@@ -1,0 +1,41 @@
+class Solution {
+    // N 行範例
+    //    [NumRows]{內容}
+    // res[0]{}
+    // res[1]{}
+    // res[2]{}
+    // 1. numRows = N 自行高度(不可小於2無義)
+    // 2. 建立 List<StringBuilder> rows 放入各高的值{}
+    // 3. 使用 for 迴圈將各高的StringBuilder 放入 rows 
+    // 4. 宣告 i = 0  // 為高的索引值res[i]
+    // 5. 設定開關 flag =-1  // 也可當上升層數
+    // 6. 透過 for loop 將 s 字串得到所以 char 
+    //    並將得到內容放入對應 rows 中
+    //    如果高的索引值 = 0 or numRows-1 (因 rows紀錄是看 index 所以 -1)
+    //    更改開關(上升層數) -1 -> 1 
+    //    更新高的索引值 i = i + flag
+    // 7. 建立 StringBuilder Ans 並將 rows 全部放入並回傳
+    public String convert(String s, int numRows) {
+     if(numRows<2){
+        return s;
+     }
+     List<StringBuilder> rows = new ArrayList<>();
+     for(int i =0 ; i<numRows ;i++){
+         rows.add(new StringBuilder());
+     }
+     int i    =  0;
+     int flag = -1;
+     for(char c :  s.toCharArray()){
+        rows.get(i).append(c);
+        if(i==0||i==numRows-1){
+          flag = -flag;
+        }
+         i = i + flag;
+     }
+     StringBuilder ans = new StringBuilder();
+     for(StringBuilder row : rows){
+       ans.append(row);
+     }
+     return ans.toString();
+    }
+}

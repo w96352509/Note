@@ -1,0 +1,27 @@
+class Solution {
+    // Integer.MAX_VALUE = 214748364
+    // Integer.MIN_VALUE = -214748364
+    // 由提示得知 -231 <= x <= 231 - 1 // 9463847411 不可回傳
+    // 設定結果初始回傳值 = 0 符合示例 4
+    // 當數字!=0都可嘗試(也可防止負數)
+    //  每次輪尋都取自尾數 %10
+    //   因數值範圍 -231 <= x <= 231 - 1 要設想溢出問題
+    //   MAX_VALUE = 214748364 / MIN_VALUE = -214748364
+    //   如果 int x 剩一數的結果 > 21474836(4) 比對後續也無意義 ex: int x = 563847412 -> 214748365 在最後一數前都跟 214748364 相同所以最後數超過必益出
+    //   上方簡寫 : 比對上下限除了最後數
+    //   更新結果
+    //   int x 去除尾數
+    // 回傳結果 
+    public int reverse(int x) {
+      int res = 0;
+      while(x!=0){
+        int num = x%10;
+        if(res > Integer.MAX_VALUE/10 || res < Integer.MIN_VALUE/10){
+          return 0;
+        }
+        res = res *10 + num;
+        x = x/10;
+      } 
+        return res;  
+    }
+}
