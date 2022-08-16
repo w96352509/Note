@@ -1,0 +1,4 @@
+Markerplace sts3 to 4... 全選
+Maven project -> java8(miki)
+pom.xml + <spring.version>4.3.25.RELEASE</spring.version> + 核心包
+ 
