@@ -1,0 +1,2 @@
+Springcore -> Maven
+Springmvc  -> Dy.. Web -> Maven
