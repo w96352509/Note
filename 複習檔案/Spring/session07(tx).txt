@@ -1,0 +1,76 @@
+配置 :
+<!-- 配置事務管理器 -->
+<bean id="transactionManager" 
+class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+<property name="dataSource" ref="dataSource" ></property>
+</bean>
+<!-- 開啟註解驅動，對事務相關的註解進行掃描與解析 -->
+<tx:annotation-driven transaction-manager="transactionManager"></tx:annotation-driven>
+
+交易註解配置 @Transaction :
+ 配置在類別（及於該類別下所有方法）
+ 配置在方法（只有當前方法可用）
+ 
+@Transactional(
+ propagation = Propagation.REQUIRES_NEW,                                 傳播行為（Propagation behavior）
+ isolation = Isolation.READ_COMMITTED,                                   隔離層級（Isolation level）
+ timeout = 3,                                                            交易超時期間（The transaction timeout period）
+ readOnly = false,                                                       唯讀提示（Read-only hints）
+ rollbackFor = {NullPointerException.class, ArithmeticException.class})  根據指定發生事件回滾或不回滾
+ // 拋出 RuntimeException 會自動 rollback
+	拋出 Exception        則必須自自訂 rollbackFor={Exception.class}; 
+
+隔離層級 
+ Isolation.READ_UNCOMMITTED 讀未提交 : 會發生髒讀(針對欄位資料)
+ Isolation.READ_COMMITTED   讀已提交 : 不可重複讀(針對欄位資料)
+ Isolation.REPEATABLE_READ  可重複讀 : 幻讀 > 其他人不可以針對指定資料列 CRUD (針對列(多個欄位))
+ Isolation.SERIALIZABLE     序列化　 : 效能低 , 消耗大 , 簡單解決以上所有問題 , 實務上不建議使用(針對表) 
+
+傳播行為(Propagation) // 事務(tx 交易) , 掛起(不用) // NESTED 不常用
+ 1. Propagation.REQUIRED      : 支持當前事務   , 若當前無事務 , 就新建一個事務(最常見 + 預設)
+ 2. Propagation.SUPPORTS      : 支持當前事務   , 若當前無事務 , 就已無事務進行
+ 3. Propagation.MANDATORY     : 支持當前事務   , 若當前無事務 , 就拋出例外
+ 4. Propagation.REQUIRED_NEW  : 直接使用事務   , 若當前有事務 , 把當前事務掛起
+ 5. Propagation.NOT_SUPPOPTED : 直接使用無事務 , 若當前有事務 , 把當前事務掛起
+ 6. Propagation.NEVER         : 直接使用無事務 , 若當前有事務 , 就拋出例外
+ 7. Propagation.NESTED        : 支持當前事務   , 如果當前事務存在，則執行一個嵌套事務，如果當前沒有事務，就新建一個事務(最少見)
+
+範例 : 圖書館
+ // Entity 對應 DB
+ -- DB         : book / stock / wallet
+ -- Entity     : book / stock / wallet
+ -- 功能 : 1.增加圖書		 2.更新圖書數量		 3.購買圖書(單筆購買輸入偶數(以書本名稱購買) , 多筆購買輸入奇數) 
+           4.全搜尋圖書		 5.新增錢包          0.跳出系統
+ -- 
+ 
+ -- tx 交易資料表
+ -- book (書籍資料), stock (庫存資料), wallet (客戶雲端錢包)
+ -- 建立 book (書籍資料) 表
+    create table if not exists book(
+	bid integer not null auto_increment,
+	bname varchar(20) not null,
+	price integer default 0,
+	ct timestamp default current_timestamp,
+	primary key (bid)
+    ); 
+
+ -- 建立 stock (庫存資料) 表
+    create table if not exists stock(
+	sid integer not null auto_increment,
+	bid integer not null, -- book 的 bid
+	amount integer default 0,
+	primary key (sid),
+	foreign key(bid) references book(bid) -- 外鍵關聯
+    );
+
+ -- 建立 wallet (客戶雲端錢包) 表
+    create table if not exists wallet(
+	wid integer not null auto_increment,
+	wname varchar(20) not null,
+	money integer default 0,
+	primary key (wid)
+    );
+
+
+
+ 

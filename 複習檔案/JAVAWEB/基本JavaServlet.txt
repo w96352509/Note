@@ -1,0 +1,115 @@
+JavaServlet :
+ 1. Java 為了擴充伺服器 -> Servlet
+ 2. Servlet - Java.class
+
+編碼設定
+ req.setCharacterEncoding("UTF-8");
+ resp.setContentType("text/html;charset=UTF-8");
+ resp.setCharacterEncoding("UTF-8");
+
+web.xml 配置路徑 :
+ 1. <Servlet> <servlet-name> & <servlet-class> </Servlet> // <servlet-class> -> scr/main/java 
+ 2. <Servlet-mapping> <servlet-name> & <url-pattern> </Servlet-mapping>
+
+送出請求 :
+ 1. 使用 Get  情況 : 小型文件(字元 240下)
+ 2. 使用 Post 情況 : 大量文件
+
+// (HttpServlet extends GenericServlet) , 配合前端 form 表單 action 導入 servlet
+處理請求 : 
+ 1. extends GenericServlet -> Service()         // 透過 service() 處理 client request	
+ 2. extends HttpServlet    -> doGet , doPost... // Service 會自動根據分派到 doXXX(); 
+
+接收請求
+ 1. req.getParameter(""); // 以前端的 name 
+
+單多筆接收
+ 1. Map<String, String[]> map = req.getParameterMap(); 
+    String[] = map.get("name"); 
+ 
+ 2. String[] = req.getParameterValues("name");
+
+Enumeration 類實作 :
+ // 取得前端參數名稱
+ Enumeration<String> names = req.getParameterNames();
+  while(names.hasMoreElements()) {
+	out.println(names.nextElement() + " ");
+  }
+
+ // 取得 Header 內容
+ Enumeration<String> headerNames = req.getHeaderNames();
+   while(headerNames.hasMoreElements()){
+    String headerName = headerNames.nextElement(); // 標頭名稱
+	String headerValue = req.getHeader(headerName); // 標頭內容
+	out.println(headerName + ":" + headerValue);
+   } 
+		
+設定錯誤驗證
+ 1. resp.senderror(500,"message");
+
+圖片讀取
+ File file = new File();
+ ServletOutputStream out = resp.getOutputStream();
+ Files.copy(file.toPath(), out); // (圖片來源端, 目的端)
+ out.close();
+
+------------------------------------------------------------------------------------------------
+範例統整 : 
+ GenericServlet  
+  1. TodayServlet     -> 練習 GenericServlet 基本構築 and web.xml 配置
+  2. LuckyServlet     -> 練習 GenericServlet 基本構築 and web.xml 配置
+  3. TimeStampServlet -> 練習 GenericServlet 基本構築 and @       配置
+ 
+ HttpServlet
+  1. area_form.html + AreaServlet -> 練習 HttpServlet and @ 配置 + 接收請求
+  2. bmi_form.html  + bmiServlet  -> 練習 HttpServlet and @ 配置 + 接收請求(多種方式)
+  3. calcArea.html  + AreaCalcServlet + CalcAreaService -> 練習 HttpServlet and @配置 + 接收請求(多種方式) 
+  4. employee.html  + EmployeeServlet + EmployeeService -> 練習 HttpServlet and @配置 + 接收請求 + req(java8) + sendError
+  5. employee.html  + BabyQRServlet                     -> 練習將資料夾圖片顯示於網頁
+  6.                  HeaderServlet -> 取得 Header 練習
+  7. message_form   + messageServlet                    -> 練習 HttpServlet and @配置 + LineAPI 
+------------------------------------------------------------------------------------------------
+calcArea.html  + AreaCalcServlet + CalcAreaService 練習多組接收後端處理
+回傳需求 : 結果 + 方法 + 參數
+
+ 1. html : 
+     <form class="pure-form" method="post" action="/JavaWeb-20220803/servlet/httpServlet/AreaCalcServlet">
+      <!-- 共3組 -->
+	  <select name="type">
+          <option value="1" selected>圓面積</option>
+          <option value="2">球體積</option>
+      </select>
+          <input type="number" placeholder="請輸入半徑" name="r" />
+	 </form> 
+
+ 2. AreaCalcServlet :
+      1. 使用 req.getParameterValues("") // 接收多組 type , r 提供給 service 方法處理
+      2. 使用 CalcAreaService.getAreaResults(String[] types, String[] rs)
+	  3. 將 CalcAreaService.getAreaResults 的回傳值 PrintWrite 出去
+
+ 3. CalcAreaService
+      1. 已知回傳需求 : 結果 + 方法 + 參數 當成 Map 處理因有多組將 List 包裝  
+      
+	  2. 處理 Servlet 過來的資料(List<Map> getAreaResults(String[] types, String[] rs))
+	       2-1. 建立 List<Map> list = new ArrayList<>(); // 蒐集回傳結果
+		   2-2. 使用 for 回圈輪巡資料
+		          2-2-3. 如果接收到的 rs = "" , rs=null 將 rs 補 0
+		          2-2-4. 將回圈資料轉型(int)
+				  2-2-5. 取得方法名稱實作(String)
+				  2-2-6. 取得面積方法實作(double)
+				  2-2-7. 建立 map 紀錄每次輪巡的結果("r", r) , ("result", result) , ("name", name)
+				  2-2-8. 將 map add 到 list
+		   2-3. return list
+     
+	 3. 取得方法名稱實作 getNameByType(int type)
+	      3-1. 建立 static Map<Integer, String> types // 用於放入對應前端格式(1,圓面積)/(2,球體積)
+		  3-2. 運用 types 取得方法名稱 : types.get(key(type));
+	     
+     4. 取得面積方法實作 getAreaResult(int type, int r)
+          4-1. 預設面積 = 0;
+          4-2. 使用	type 取對應方法 switch(type) :
+                 4-2-1. case 1: // 圓面積  Math.pow(r, 2) * Math.PI;
+                        case 2: // 球體積  Math.pow(r, 3) * Math.PI * 4/3;
+                 4-2-2. default : area = -1;
+          4-3 回傳 area;				 
+		  		  

@@ -1,0 +1,114 @@
+1. pom.xml -> mysql , c3p0
+      <!-- MySQL -->
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>8.0.29</version>
+		</dependency>
+      <!-- c3p0 -->
+		<dependency>
+			<groupId>com.mchange</groupId>
+			<artifactId>c3p0</artifactId>
+			<version>0.9.5.5</version>
+		</dependency>
+---------------------------------------------------------------------------------------
+配置檔放置位子 : conf (type : source folder)		
+---------------------------------------------------------------------------------------
+外部配置檔(properties) : db.properties
+---------------------------------------------------------------------------------------
+xml 配置 : jdbc-config.xml	
+ 配置 : 掃描 / 載入外部檔案	  
+ Bean : 
+        1. c3p0(id = dataSource) : com.mchange.v2.c3p0.ComboPooledDataSource 
+        
+		2. jdbcTemplate(id = jdbcTemplate) : org.springframework.jdbc.core.JdbcTemplate
+		
+		3. namedParameterJdbcTemplate(id = namedParameterJdbcTemplate) :
+		    org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
+        
+		4. transaction manager(id = transactionManager) : 
+		    org.springframework.jdbc.datasource.DataSourceTransactionManager
+ 
+ tx   :	<tx:annotation-driven transaction-manager="transactionManager" /> 		
+ 
+ 掃描       : <context:component-scan base-package="" />
+ 
+ 載入外部檔 : <context:property-placeholder location="db.properties"/> 
+ 
+ c3p0 配置  : <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"> // id 取名 dataSource
+               <!-- basic -->
+			     <property name="driverClass" value="${jdbc.driver}" />
+		         <property name="jdbcUrl" value="${jdbc.url}" />
+		         <property name="user" value="${jdbc.username}" />
+		         <property name="password" value="${jdbc.password}" />
+			   <!-- options -->
+		         <property name="minPoolSize" value="10" />  // 最小連線數量
+		         <property name="maxPoolSize" value="100" /> // 最大連線數量
+		         <property name="initialPoolSize" value="10" /> // 初始值大小
+		         <property name="maxIdleTime" value="1800" />   // 連線時間 
+		         <property name="maxStatements" value="100" /> <!-- 0 表示 no cahce any statement --> // 緩存大小	 
+			  </bean>
+ 
+ 其他配置  :    
+	<!-- jdbc template -->
+	<bean id="jdbcTemplate"
+		class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	
+	<!-- named parameter jdbc template -->
+	<bean id="namedParameterJdbcTemplate" class="org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate">
+		<constructor-arg ref="dataSource"></constructor-arg>
+	</bean>
+	
+	<!-- 配置事務管理器 transaction manager -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	
+	<!-- 開啟事務的註解@驅動, 對事物相關的註解@進行掃描與解析 -->
+	<tx:annotation-driven transaction-manager="transactionManager" />   
+
+---------------------------------------------------------------------------------------
+Java 檔配置 jdbc-config.java
+ 1. 類為配置檔 : @Configuration
+ 2. 類的掃瞄   : @ComponentScan
+ 3. 讀取外部檔 : @PropertySource(value = "classpath:db.properties") 
+ 4. 使用 Environment 用於取得外部檔案配置內容(需 @Autowired)
+ 5. @Bean 的配置
+     1. 配置 DataSource(javax.sql.DataSource) -> 宣告 ComboPooledDataSource 設定 driver , url 等透過 Environment 取得 property 
+     2. 配置 JdbcTemplate -> return new JdbcTemplate(dataSource);
+	         NamedParameterJdbcTemplate -> return new NamedParameterJdbcTemplate(dataSource); 
+			 DataSourceTransactionManager -> return new DataSourceTransactionManager(dataSource);
+
+---------------------------------------------------------------------------------------
+CRUD(常用的) -> @Repository
+1. 搜詢 :
+    List<Map<String, Object>> -> jdbcTemplate.queryForList(sql);
+	List<>                    -> jdbcTemplate.query(sql , RowMapper<>();)
+    List<>	                  -> jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(.class));
+
+2. 新增修改刪除 -> jdbcTemplate.update(sql,..,..);
+
+3. NamedParameterJdbcTemplate -> MapSqlParameterSource params = new MapSqlParameterSource(); -> addValue("", );	
+
+4. 多筆新增(int [] 回傳為異動筆數) 
+    List<Object[]> rows -> jdbcTemplate.batchUpdate(sql , rows);
+	List<> name         -> new BatchPreparedStatementSetter 
+	                                                                             i = name 的 index
+	                     -> setValues(PreparedStatement ps, int i) -> ps.setType(1,name.get(i).get..());
+						 -> getBatchSize() -> return name.size();
+						 -> jdbcTemplate.batchUpdate(sql , BatchPreparedStatementSetter );
+
+5. 聯集查詢 
+    List<name> -> ResultSetExtractor<List<name>> resultSetExtractor
+	           -> JdbcTemplateMapperFactory
+		       -> .newInstance()
+		       -> .addKeys("") // 主鍵名稱
+		       -> .newResultSetExtractor(name.class);
+			   -> return jdbcTemplate.query(sql, resultSetExtractor);
+              	
+	
+			 
+ 
+ 

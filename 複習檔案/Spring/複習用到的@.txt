@@ -1,0 +1,4 @@
+@Configuration // 表示此類為一個配置檔
+@ComponentScan // 給 spring 管理 , 預設會掃描此類的所在位置
+@PropertySource(value = { "classpath:..properties" }, ignoreResourceNotFound = true) // 如找不到呼略
+@Bean  // Spring 物件

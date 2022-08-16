@@ -1,0 +1,85 @@
+
+
+Entity 注意部分
+ 1. @Id 規劃 IDENTITY
+ 2. @JsonIgnoreProperties("") // 重要
+ 
+-------------------------------------------------------
+Controller 注意部分
+ 1. 得到前端資料為 @RequestBody Map<String , String>
+ 2. @RestController
+-------------------------------------------------------
+PageController("/page")
+  /*  
+   * -------------------------------------------------
+   * METHOD PATH                     Desp
+   * -------------------------------------------------
+   * GET    {"/home"}                return "home";
+   * GET    {"/classify"}            return "classify";
+   * -------------------------------------------------
+   */
+  
+
+-------------------------------------------------------
+Classify
+ 1. Entity : 
+      @Id     : id(Integer) 
+      @Column : name(String) , tx(Boolean)
+	  關係    : 單(Classify) <-> 多(TStock) // Set<> , 不帶入 json
+ 
+ 2. Repository : extend JpaRepository<Classify , Integer>
+ 
+ 3. Controller :
+  
+  /* /classify 
+   * -------------------------------------------------
+   * METHOD PATH                     Desp
+   * -------------------------------------------------
+   * GET    {"/", "/query"}           查詢全部資料     findAll()
+   * GET    {"/{id}", "/get/{id}"}    查詢單筆資料     get // 使用 Optional
+   * POST   {"/", "/add"}             新增資料         add
+   * PUT    {"/{id}", "/update/{id}"} 修改資料(根據ID) update
+   * DELETE {"/{id}", "/delete/{id}"} 刪除資料(根據ID) delete
+   * -------------------------------------------------
+   */
+	  
+-------------------------------------------------------
+TStock
+ 1. TStock :
+      @Id     : id(Integer)
+      @Column : symbol(String) , name(String) , BigDecimal(preClosed , price , changePrice , changeInPercent) , volumn(Long)
+	            transactionDate(Date) + @Temporal(TemporalType.TIMESTAMP)
+	  關係    : 單(Classify) <-> 多(TStock) // 不帶入 json
+
+ 2. TStockRepository :
+     
+     // 更新基礎資訊 	 
+	 @Transactional
+	 @Modifying
+	 @Query(value = "UPDATE TStock SET name=?2, symbol=?3, classify_id=?4 WHERE id=?1", nativeQuery = true)
+	 public void update(@Param("id") Integer id, @Param("name") String name, @Param("symbol")  String symbol,
+					    @Param("classify_id") Integer classify_id);
+	
+	 // 更新進階資訊
+	 @Transactional
+     @Modifying
+     @Query(value = "UPDATE TStock SET change_price=?2, change_in_percent=?3, pre_closed=?4, price=?5, transaction_date=?6, volumn=?7 WHERE id=?1", nativeQuery = true)
+     public void updatePrice(@Param("id") Integer id, @Param("changePrice") BigDecimal changePrice, 
+					    	 @Param("changeInPercent") BigDecimal changeInPercent, @Param("preClosed") BigDecimal preClosed, 
+					    	 @Param("price") BigDecimal price, @Param("transactionDate") Date transactionDate, 
+					    	 @Param("volumn") Long volumn);
+ 
+ 3. TStockController :
+    
+  /* /tstock 
+   * -------------------------------------------------
+   * METHOD PATH                     Desp
+   * -------------------------------------------------
+   * GET    {"/", "/query"}           查詢全部資料     query
+   * GET    {"/{id}", "/get/{id}"}    查詢單筆資料     get    // 使用 Optional 
+   * POST   {"/", "/add"}             新增資料         add    // 如果 Classify 回傳 null
+   * PUT    {"/{id}", "/update/{id}"} 修改資料(根據ID) update // 如果   = null 回傳 null 
+   * DELETE {"/{id}", "/delete/{id}"} 刪除資料(根據ID) delete // 如果   = null 回傳 null 
+   * -------------------------------------------------
+   */	
+							 

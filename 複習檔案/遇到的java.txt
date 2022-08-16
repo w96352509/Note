@@ -1,0 +1,16 @@
+1.判斷字串是否是數字 :
+    String.char().allMathch(Character::isDigit);
+
+2.HttpServlet -> req + java8 
+    req.getParameterMap().entrySet().forEach(e -> out.print(e.getKey() +"="+ Arrays.toString(e.getValue())));
+
+3.java(讀取圖片) -> html (讀取圖片 -> 接收 resp 的 OutPutStream -> Files(圖片來源端, 目的端))
+    File file = new File("圖片位置"); // 讀取圖片
+	ServletOutputStream out = resp.getOutputStream();
+	Files.copy(file.toPath(), out); // (圖片來源端, 目的端)
+	out.close();
+
+	
+	
+    
+ 

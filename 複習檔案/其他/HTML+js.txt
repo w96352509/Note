@@ -1,0 +1,41 @@
+JavaScript:
+  document.getElementById('').value; // 取得 HTML ID
+  .focus()                           // 不返回任何值
+  return false                       // 跳出方法
+-------------------------------------------------------------------------
+表單基礎格式
+<form class="pure-form" method="post" action="">
+		<fieldset>
+			<legend></legend>
+			
+		</fieldset>
+</form>
+
+表單上傳型態 : enctype="multipart/form-data"
+onsubmit     : "return function()" // 放棄表單傳送給其方法執行
+onchange     : "function()"        // 將欄位資訊帶入 function() 中
+
+-------------------------------------------------------------------------
+thymealf 
+ - 插入其html : <th:block th:include=""></th:block>
+ - 放入圖片   : 從 resources / static 開始找 th:src="@{/images/.png}"
+
+-------------------------------------------------------------------------
+啟動網址 : window.location.href=;
+-------------------------------------------------------------------------
+javascript - fetch 格式  
+ fetch(url,{method=''}).then();
+-------------------------------------------------------------------------
+table th 調整
+  <thead>
+	<tr>
+		<th rowspan="2" valign="middle" align="center">編號</th>
+		<th rowspan="2" valign="middle" align="center">名稱</th>
+		<th colspan="2" align="center">員工資料</th>
+	</tr>
+	<tr style="border-top: 1px solid lightgray;"> <!-- 字畫灰線 -->
+		<th>員編</th>
+		<th>姓名</th>
+	</tr>
+  </thead>
+ 
