@@ -1,0 +1,848 @@
+目錄 : 基礎介紹 
+ 
+何謂框架
+  - 框 : 範圍(解決一部分範圍內的問題)
+  - 架 : 支撐(實現開發流程)
+  - 框架 : 技術解決與整合方案的半成品
+
+Spring 由來
+  - J2EE -> Spring
+  - 2002 -> Spring    + Hibernate (ORM框架)
+         -> Struts    + Spring + Hibernate (組合已死) 
+  - 後續 -> SpringMVC + spring + Hibernate or MyBaits or Spring JPA
+  - 2021 -> SpringBoot(把原要設定改成預設值)  
+  
+Spring 創作目的
+  
+  - 非侵入式程式設計架構
+      - POJO(Plain old Java Object)     // 普通的 Java 物件解不受任何限制
+      - 業務邏輯程式 , 不含框架程式碼 	// 資源配置都在 applicationContent.xml
+      - 讓業務邏輯可以自由移出各框架
+	  - 讓設定檔定義 class 意義
+  
+  - 管理物件生命週期
+      - 透過 xml 的配置並建立物件依賴關係
+
+一站 Web 應用框架
+  - 表現層    (Web層)
+      - SpringMVC
+  - 業務邏輯層(Service層)
+      - Spring
+  - 資料訪問層
+      - SpringORM(DAO層) : JPA / HibernateTrmplate / MyBaits
+
+特性:
+  - 輕量級 Framwork
+      - 重量級 and 輕量級 : 是否相依容器
+        Servlet    Spring
+      
+	  - 不相依特定 JavaEE
+      - 單純地將元件部屬到 spring 中  	  
+
+模組:
+  - AOP 攔截器 / ORM / DAO / Web / Context / MVC
+  -              Spring Core
+
+技術名詞(重要):
+  - Java靜態 new / 動態 Class.forname()
+  - IOC 反轉注入 配置於 spring 檔中的物件 擁有第三方來保證創建物建 , 容易管理生命週期
+  - DI  依賴注入 建構子 / setter
+  - AOP	方面導向 比　webFilter 更強
+
+------------------------------------------------------------------------------------------------------------------------
+0620
+目錄 : IOC / DI / Bean 配置 /Bean scope / Bean 呼叫 / ref / autowire  
+  
+基本 Spring 操作(範例 : session01 -> hello) 
+  - 1. Bean物件規劃 -> applicationContent.xml 配置 or Java 註釋配置 -> 測試(Junit) 
+
+Spring IOC / DI
+  1. 輕量級 Framwork
+    - DI  (Dependency Injection)        : 依賴注入     -> 建構子與 get/set 注入
+    - IOC (Inversion of Control)        : 反轉控制     -> 透過第三方注入
+    - AOP (Aspect Oriented Programming) : 方面導向設計 -> 增強版 webFiliter
+  
+  2. Bean 的配置(範例 : session02) 
+    - 可透過 applicationContent.xml or @Configuration
+    - bean scope : 
+        1. 單一實例(預設) : singleton
+        2. 多個實例       : prototype
+        3. Web應用        : request / session / global-session
+  
+  3. Bean 呼叫( 回傳type : ApplicationContext , 範例 : session02 -> Lotto)
+    - xml  配置 : 
+	    1. 透過 ClassPathXmlApplicationContext("applicationContext.xml"); // 找到 applicationContext.xml 的 內容
+        2. 使用 getBean("Bean id" , Bean物件.class);
+    
+	- Java 配置 :
+        1. 透過	new AnnotationConfigApplicationContext(Java配置檔.class);
+        2. 使用 getBean("Bean name" , Bean物件.class);
+	
+  4. DI 依賴注入(範例 : session02 -> Author)
+    - 由 applicationContent.xml 注入參數 (會自動轉型)
+	
+	方法注入 :
+	- <prototype>        : <property name="name(配合 Bean物件的參數名稱)"> <value>John</value> </property>
+	- 簡化 p:            : <bean id="" class="" p:參數名稱="">  
+       	
+	
+	建構子注入 :
+	- <constructor-arg>  : <constructor-arg index="0" value="Mary"></constructor-arg> // index = 建構子參數順續
+	- 簡化 c:            : <bean id="" class="" c:參數名稱="">  
+
+  5. ref 參考配置(範例 : session02 -> Book)
+    - 物件名-ref = "bean id" EX: p:name="Java" p:price="150" p:author-ref="author1" 
+	
+  6. autowire 自動配置(範例 : session02 -> Paper / Color / Size)
+    - byType : 超過一個匹配型別就會發生錯誤(Paper 需要 Color and Size 當 <bean> 有超過1個可以匹配時就會發生錯誤)
+	    EX: <bean id="paper1" p:id="101" autowire="byType" class="com.spring.core.session02.beans.Paper" />
+            // 有兩個可以匹配則錯誤
+			<bean id="color1" class="com.spring.core.session02.beans.Color" p:name="紅色" />		
+		    <bean id="color2" class="com.spring.core.session02.beans.Color" p:name="白色" />
+    
+	- byName : 找到對應的 Bean物件 的參數名稱
+        EX: Paper.class -> private Color color , private Size size 則對應 Bean id = "color" and "size"	
+
+------------------------------------------------------------------------------------------------------------------------
+0624
+目錄 : 引入外部資源 / Set , List , Map 資料集合注入 / <bean> 的生命週期 / FactoryBean(少用) 
+
+ 1. 引入外部資源(範例: 外部檔: data.properties / Bean : Clazz.java )
+      - 外部資源檔型 : properties             // 取名舉例 : clazz.name=Java
+	  - 方法 : 
+	     1. 不常用 : 
+		      <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		        <property name="location" value="data.properties" />
+	          </bean>
+		 2. 常用 <context:properties> 配合 <bean> 的 p:參數="${}" :	
+		      <context:property-placeholder location="外部檔名" />
+			  <bean id="" p:name="${}" class=""/>
+		 
+ 2.<property>與 util 配置 set / map / list  
+	  - 範例 : Teacher , student 
+	  - util 先配置在參考配置
+		 - Set  配置 :
+		     - <property name="Bean物件的參數名稱"> : <set><ref bean=""></ref></set>
+		     - <util:set id  ="Bean物件的參數名稱"> :      <ref bean="">
+		   
+		 - List 配置 :
+         	 - <property name="Bean物件的參數名稱"> : <list><value></value></list>	   
+        	 - <util:list id ="Bean物件的參數名稱"> :       <value></value>
+		   
+         - Map 配置  :
+             - <property name="Bean物件的參數名稱"> : <map><entry key=""><value></value></entry></map>	
+             - <util:map id  ="Bean物件的參數名稱"> : <entry><key><value></value></key><value></value></entry>
+ 
+ 3. Bean 的生命週期(範例 : BeanCycle)
+      - 開始 : init-method    = "bean物件的方法名稱"
+      - 結束 : destroy-method = "bean物件的方法名稱" 透過 ClassPathXmlApplicationContext 關閉(close)	  
+ 
+ 4. 工廠創建(少用) : 透過工廠物件新增給 xml 使用並給主物件使用
+      - implements FactoryBean<物件>
+	     -  getObject()     // 回傳 new 物件()
+		 -  getObjectType() // 回傳物件.class
+		 -  isSingleton()   // 有 prototype 以 property 為主
+------------------------------------------------------------------------------------------------------------------------		0627
+目錄 : MVC 基本運作 / interface 的優點 / Java @配置至 xml 掃描
+注意 : xml 要掃描 <context:component-scan base-package="要掃描的位置"></context:component-scan>
+ 
+ 1. 利用 Java Annotation(@) 進行 DI
+      - MVC 註解
+         - @Controller / @Service / @Reposirory
+         
+		 - 運作 : User <-> Controller(組合Bean) <-> Service(驗證物件邏輯服務等) <-> Reposirory(DB連結) <-> DB 			 
+	         - Controller 接 Serivce
+			 - Serivce    接 Reposirory
+			 - Reposirory 接 DB
+		 
+		 - Service 與 Reposirory 使用 interface(含兩個以上的實作) 
+		    - Serivce 可能有很多的 Controller 使用 
+            - Repository 可能有多 Service 使用
+            - Controller 幾乎都是一對一則不用 interface
+	  
+	  - 常用註解(@)
+         - @Controller 控制類   : 用於註解此 bean 為 MVC 的控制層
+         - @Compontent 元件     : 用於註解此 bean 被 Spring 管理物件生命週期
+         - @Service             : 用於註解此 bean 為 MVC 的業務層
+         - @Reposirory          : 用於註解此 bean 為 MVC 的訪問層	
+             - @Compontent -> public @interface Service / Reposirory // @Compontent = @Service / @Reposirory
+         - @Resource 資源類     : 用於自動照 ByName 配置(J2EE)
+         - @Autowirted 自動綁定 : 用於自動照 ByType 配置(Spring) 可配合使用	@Qualifier 限定詞 = @Resource 效果
+		     - 也可當作建立實體
+		 - @Bean 方法及注入     : @Configuration註解或 @Component註解類中使用 @Bean批註
+		 - @Value               : 賦予預設值可搭配 Spring EL 語法使用
+		     - 普通用法 : @Value(value="")
+			 - 集合用法 :
+			     - List : @Value(value = "#{${物件名稱:{'值','值'}}}")
+				 - Set  : @Value(value = "#{${物件名稱:{'值','值'}}}")
+				 - Map  : @Value(value = "#{${物件名稱: {'K': 'V', 'K': 'V'}}}")
+				 - #{}  : 使用 Spring EL
+		 
+		 - @Scope               : 物件範圍
+		 - @PropertySource("classpath:") 外部配置
+		     - 配合 @Value(value="${}") // Array[] , Set , 正常型別
+             - #{}  使用 Spring EL      // List(將分隔符號去除(split)) , Map
+			     - List : @Value(value="#{'${物件名稱}'.split('分隔符號')}")
+				 - Map  : @Value(value="#{${物件名稱}}")
+			 
+------------------------------------------------------------------------------------------------------------------------	 
+0701 
+目錄 : 代理模式(動/靜)
+ 
+ 代理模式 : 不可直接使用原物件需透過代理物件控制訪問
+   目的 : 將公開方法與業務邏輯分開          
+ 
+ 靜態代理(範例 : session04.sta) :  
+   必須 : 代理物件與被代理物件要實作同一介面
+   規格 : 代理物件 + 建構式(將代理物件注入) + 覆寫方法
+   呼叫 : 被代理物件 = new 代理者(代理物件)
+   優點 : 直覺快速
+   缺點 : 只能單一
+
+ 動態代理(範例 : session04.dyn / cglib)   
+   分為 : JDK 代理 / cglib 代理
+      
+	  - JDK 代理 : 僅支援 interface 
+	      - JDK1.3 後可使用 , 不必為特定物件代理 , 可使用一個 Handler(處理者)服務各物件
+          必須     : 處理者必須實作 java.lang.reflect.InvocationHandler
+	      規格     :  
+		    代理物件(宣告Object object) + 建構式(將代理物件注入) + 取得代理物件(類別載入器 + 代理物件介面 + 處理代理實現)
+          取得代理物件 :
+		    - 類別載入器  (type : ClassLodaer)
+		    - 代理物件介面(type : Class[])
+		    - 取得代理物件(public Object getProxy())
+		      - 處理代理實現(type : InvocationHandler -> (proxy(代理物件), method(調用方法), args(參數)))
+			      - 調用業務方法(回傳) : method.invoke(代理物件 , 參數);
+		      - 取得代理物件(回傳) = Proxy.newProxyInstance(loader , interface , invocationHandler)	  
+		 
+		   呼叫 : 代理物件 = new 處理者( new 被代理物件).getProxy();
+
+      - Cglib 代理 : 可以實現非介面類
+	      原理 : 透過 Echancer(加強子類別) 來覆寫父類別 (子 extend 父)
+	      使用 : 方法攔截器 implements MethodInterceptor (方法攔截器) 
+		    覆寫 :  intercept(Object obj, Method method, Object[] args, MethodProxy proxy)
+			  - return proxy.invokeSuper(Object , Object[]);
+		  
+		  呼叫 : 
+            1. 呼叫增強器   : new Enhancer();
+            2. 設定增強對象 : .setSuperclass(new 代理物件);
+            3. 設置方法攔截 : .setCallback(new 方法攔截器);	
+            4. 創建物件     : .create(); // 需轉型(代理物件)			
+
+ 切面程式 Aspect(範例 session04.dyn.MyLogger)
+   - 可配合動態代理(JDK)
+   - 可以自我定義要帶入的參數(類別(object.getclass) , 執行方法(method.getName) , 參數(args)) 
+       EX : public static void before(Class cls, String methodName, Object[] args)    
+	   
+----------------------------------------------------------------------------------------------------------------------------	 
+0704
+目錄 : SpringAop
+  
+  1. AOP 方面導向 : 物件導向(垂直) + 橫切關注點(AOP 水平架構)
+    - 橫切關注點(Cross - cutting concern) : 把公用方法分開撰寫
+
+  2. 攔截機制 Filter and AOP
+    - Filter 路徑過濾
+    - AOP    橫切攔截(僅支援方法代理 / 不支援建構子代理)
+  
+  3. AOP 與 AspectJ
+    - AOP     是一種程式開發方式
+    - AspectJ 是將 AOP 引入 Java 專案	
+
+  4. AOP 觀念術語
+    - Aspect(方面)
+    - Advice(通知)       : 前置通知(Before)、後置通知(After)、例外通知(AfterThrowing)、返回通知(AfterReturning)、環繞通知等 
+    - Joinpoint(連結點)  : 商業邏輯的進入點
+        1. joinPoint.getSignature().getName(); // 取得方法簽章名稱
+        2. joinPoint.getArgs();                // 方法參數		
+	
+	- Pointcut (切入點)  : 讓 Aspect 在那些 Joinpoint 使用 @Pointcut(value ="")
+	- Target   (目標對象): 被Adivce(通知)應用的物件
+	- Proxy    (代理)    : Spring的 AOP 代理方式
+	- Weave    (縫合)    : Target 的過程
+	- 過程 : Pointcut - Weave -> Joinpoint -> Cross - cutting concern -> Aspect -> Advice -> Pointcut ...
+	
+  5. Pointcut EL 語法使用
+    - 各範例
+	  - (value = "execution(* 方法路徑.*.*(..))") // 前 * 任意方法類型與型態 / 後 * 此方法路徑的任意方法 / .. 表示任意參數  
+	  - (value = "execution(public Integer com.spring.core.session05.aop.MathCalcImpl.add(Integer, Integer))") // 全寫
+	  - (value = "execution(public * com.spring.core.session05.aop.MathCalcImpl.*(..))" // 任意型態
+	  - (value = "execution(* *(..))") // 全攔截
+
+  6. AOP 範例
+    - 注意          : 要改 Spring 代理 
+    - Class 設定@   : @Compontent 給 Spring 代理 / @Aspect 切面 / Order() 順序 0~99
+    - 設定 Pointcut	: @Pointcut(value = "execution(*....*(..))") public void pt(){}; // pt{} 為 Pointcut 名稱
+	- 設定各通知    :
+	    - 前置通知 @Before        (value="pt()") public void beforeAdvice(Joinpoint joinPoint){};
+		- 後置通知 @After         (value="pt()") public void  AfterAdvice(Joinpoint joinPoint){}; // 必定執行
+		- 返回通知 @AfterReturning(value="pt()" , returning="result")  // 將方法返回值放到 result 中 , 有錯誤不執行
+		             public void afterReturningAdvice(JoinPoint joinPoint, Object result){}; 
+		
+		- 異常通知 @AfterThrowing(value = "pt()", throwing = "ex") // 可以將異常通知給 throwing 接收
+		             public void afterThrowingAdvice(JoinPoint joinPoint, Throwable ex) {};
+   
+   - 環繞通知方法(@Around) :
+        - 型別   : Object
+		- 進入點 : ProceedingJoinPoint
+        - 範例 :
+            1. 方法        : public Object aroundAdvice(ProceedingJoinPoint joinPoint)
+            2. 設定回傳值  : 
+                 2-1. 型別 : Object
+                 2-2. 預設 : null
+            3. 得到方法名稱: joinPoint.getSignature.getName();
+            4. 得到方法參數: joinPoint.getArgs();
+            5. 套入 try(前置通知 / 執行業務邏輯(重要必要) / 返回通知 ) catch (異常通知) finally (後置通知)
+                 5-1. 執行業務邏輯 : 回傳值 = joinPoint.proceed();
+            6. 回傳				 
+	
+	- 呼叫 :
+	   - XML 配置 :
+	        0. XML 中配置 : 
+			     1. <!-- 掃描配置 -->
+	                  <context:component-scan base-package="com.spring.core.session05" />
+				 2. <!-- 讓 Spring AOP 切面自動代理 -->
+	                  <aop:aspectj-autoproxy proxy-target-class="true" />
+	        1. 取得 XML   : ApplicationContext ctx = new ClassPathXmlApplicationContext("xml名稱.xml");
+			2. 取得方法   : 介面 名稱 = ctx.getBean("實作類別(首字小寫)" , 實作類別.class);
+	  
+	  - Java 配置 :
+	        0. 註釋注入 : 
+			      @Configuration          // 此為 Java 配置檔 
+			      @ComponentScan()        // 啟用元件掃描(掃瞄有 @ 註解的元件, 目的是交由 String 來管理)
+						                  // @ComponentScan(basePackages={"方法路徑"}) 可指定掃描區域
+			      @EnableAspectJAutoProxy // 自動生成代理物件
+	
+	  - 橫向多型 :
+	        1. Class 註釋配置 : @Aspect 
+			2. 物件註釋配置   : @DeclareParents(value="介面位置+" , defaultImpl = 物件.class)  
+			                      public 介面 名稱 // 要多型的介面
+			   // defaultImpl 預設多型類別 , + 代表介面下所有方法
+	        
+	
+      - AOP 實作 :
+            1. 範例 : 
+			     1-1. 介面(Performance) -> Class (Dancer)
+                 1-2. 介面(Singer)		-> Class (BackSinger)	
+                 1-3. Aspect -> Class(Introducter) 練習轉換類別(不須掃描) / Class(Audience) 練習 AOP
+		    
+			2. 呼叫 Java 配置
+                 2-1. 設定 javaConfig.java 配置 : @Configuration + @ComponentScan() + @EnableAspectJAutoProxy 
+                        2-1-1. 設定     Bean : @Bean(name="") public 介面 名稱(){ 介面實作 名稱 = new 介面實作; 回傳名稱 };
+                        2-1-2. 設定切面 Bean : @Bean public 切面類別 名稱(){ 回傳 new 切面類別 };
+                 
+				 2-2. @Test 呼叫
+                        2-2-1. ApplicationContext ctx = new AnnotationConfigApplicationContext(config名稱.class);
+                        2-2-2. 介面 名稱 = ctx.getBean("名稱" , 介面實作.class);
+                        2-2-3. try{
+						         dancer.perform(); // 舞者表演
+						        } - catch(Exception e){
+								 System.out.println(e); // 意外發生
+			                     // 舞者轉換跑道
+			                     // 改行去唱歌
+			                     // dancer 透過 introducter(經紀人) 轉換跑道
+			                     System.out.println("舞者轉歌者");
+			                     Singer singer = (Singer) dancer;  // 橫向多型
+			                     singer.sing();  
+								}
+----------------------------------------------------------------------------------------------------------------------------     0708
+目錄 : Spring JDBC(SpringTemplate / NamedParameterJdbcTemplate / Transaction manger)
+筆記 : 使用 c3p0 pool 為了多方使用
+       Spring JDBC : 為了簡化 Java JDBC API / 支援多執行緒 : @Autowirted JdbcTemplate jdbcTemplate
+	   (SpringTemplate(property) / NamedParameterJdbcTemplate(constructor-arg)) 都需要 dataSource
+	   
+
+ 1. pom.xml 增加 mysql and Simple flat mapper jar
+ 2. 配置 db.properties 檔
+      - jdbc.driver : com.mysql.cj.jdbc.Driver
+      - jdbc.url : jdbc:mysql://localhost:3306/資料庫名稱?serverTimezone=Asia/Taipei&characterEncoding=utf-8&useUnicode=true  
+      - jdbc.username : (筆電 & 桌機) root
+      - jdbc.password :	12345678 / zxcv985613
+ 
+ 3. 透過 xml 配置 : jdbc-config.xml
+      - 掃瞄                 <context:component-scan base-package="com.spring.core.session06" />
+      - 外部 db.properties : <context:property-placeholder location="db.properties" />
+      - 設定 c3p0 pool
+          <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+		    // Basic(基本配置)
+			<property name="driverClass" value="${jdbc.driver}" />
+		    <property name="jdbcUrl" value="${jdbc.url}" />
+		    <property name="user" value="${jdbc.username}" />
+		    <property name="password" value="${jdbc.password}" />
+		    // 其他設定
+			<property name="minPoolSize" value="10" /> 
+		    <property name="maxPoolSize" value="100" />
+		    <property name="initialPoolSize" value="10" />
+		    <property name="maxIdleTime" value="1800" />
+		    <property name="maxStatements" value="100" /> <!-- 0 表示 no cahce any statement -->
+	      </bean>
+     
+	 - 加入 jdbc template : 		  
+	      <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+		    <property name="dataSource" ref="dataSource" />
+	      </bean>
+
+     - named paramter jdbc template :
+          <bean id="namedParameterJdbcTemplate" class="org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate">
+		    <constructor-arg ref="dataSource" />
+	      </bean>
+     
+	 - 配置事務管理 Transaction manger
+	     <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		   <property name="dataSource" ref="dataSource" />
+	     </bean>
+		 
+	 - 開啟事務的註解@驅動, 對事物相關的註解@進行掃描與解析 
+	     <tx:annotation-driven transaction-manager="transactionManager" />	 
+     
+
+  4. @Test 測試呼叫
+    - ApplicationContext ctx = new ClassPathXmlApplicationContext("jdbc-config.xml");
+      ComboPooledDataSource	cp = ctx.getBean("dataSource" , ComboPooledDataSource.class);
+	  cp.getConnection(); // 連線
+
+Java 配置 Spring JDBC
+  1. @ 配置 :
+       - @Configuration                                     // 表示此類為配置檔  
+	   - @ComponentScan(backage={"路徑"})                   // 掃描給 Spring 使用 , 預設為此類所在位置
+	   - @PropertySource(value={"classpath:...properties"}) // 載入外部配置檔
+	   - @EnableTransactionManagement                       // 開啟事務交易
+  
+  2. 方法實作 :
+       
+	   1. @Autowired protected Environment env // 用於取得 properties 內容  , 使用 protected 能有繼承優點
+	   
+	   2. @Bean 設定 (DataSource / jdbcTemplate / namedParameterJdbcTemplate / Transaction Manger)
+	       1. public DataSource dataSource(){
+		             // 新增 c3p0 pool(ComboPooledDataSource)
+				     ComboPooledDataSource ds = new ComboPooledDataSource();
+				try{
+				     // 透過 ComboPooledDataSource 設定 c3p0 的各配置 , properties 內容透過 Environment 取得
+					 // Basic
+					 ds.setDriverClass(env.getProperty("jdbc.driver"));
+			         ds.setJdbcUrl(env.getProperty("jdbc.url"));
+			         ds.setUser(env.getProperty("jdbc.username"));
+			         ds.setPassword(env.getProperty("jdbc.password"));
+			         // Options
+			         ds.setMinPoolSize(10);
+			         ds.setMaxPoolSize(100);
+			         ds.setInitialPoolSize(10);
+			         ds.setMaxIdleTime(1800);
+			         ds.setMaxStatements(100);
+				}catch{
+				   e.printStackTrace();  
+				}
+				   return ds;
+			}
+			
+			2. public JdbcTemplate jdbcTemplate(){                              // 需要 dataSource
+			       return new JdbcTemplate(dataSource());
+			   }  
+ 	        
+			3. public NamedParameterJdbcTemplate namedParameterJdbcTemplate() { // 需要 dataSource
+		          return new NamedParameterJdbcTemplate(dataSource());
+	           }
+			
+            4. public DataSourceTransactionManager transactionManager() {       // 需要 dataSource
+		          return new DataSourceTransactionManager(dataSource());
+	           }			
+       3. @Test 測試呼叫
+            - ApplicationContext ctx = new AnnotationConfigApplicationContext(SpringJDBCConfig.class);
+              ComboPooledDataSource	cp = ctx.getBean("dataSource" , ComboPooledDataSource.class);
+	          cp.getConnection(); // 連線
+
+----------------------------------------------------------------------------------------------------------------------------
+0711
+目錄     : SpringJDBC 實作 CRUD 
+全查詢   : queryForList() / RowMapper / new BeanPropertyRowMapper
+資料庫   : emp(eid , ename , age , createtime) / job(jid , jname , eid)
+
+  必需   : @Autowirted JdbcTemplate / NamedParameterJdbcTemplate
+  
+  全搜尋 : 
+         1. queryForList(sql) 
+		      -> type : List<Map<String , Object>>
+		 
+		 2. RowMapper         
+		      -> type : List<類別> 
+			  -> (ResultSet rs, int rowNum)->{new 物件 , 設定值} -> query(sql , rowMapper)
+         
+		 3. new BeanPropertyRowMapper(類.class) 
+		      -> type : List<類別> 
+			  -> query(sql , new BeanPropertyRowMapper(類別.class));
+
+  單筆搜尋 :
+         1. queryForObject(sql, new BeanPropertyRowMapper<類別>(類別.class), 參數);
+ 		      -> type : 類別 
+			  -> query(sql , new BeanPropertyRowMapper(類別.class) , 參數);
+  
+  單筆新增 :
+         1. JdbcTemplate.update(sql,參數,...)    // 按照 sql 順序
+		      -> type : int 
+			  -> sql  : value(? ,?)
+			  -> 回傳為異動比數
+		
+		 2. MapSqlParameterSource + NamedParameterJdbcTemplate.query();
+		      -> type : int 
+			  -> sql  : value(:名稱 ,:名稱)
+			  -> 透過 MapSqlParameterSource 新增值 : new MapSqlParameterSource.addValue("名稱" , 參數).addValue("名稱" , 參數);
+			  -> 回傳為異動比數
+
+  多筆新增 :
+         1. jdbcTemplate.batchUpdate(sql , rows);
+       	      -> type : int[] 
+			  -> sql  : value(? ,?)
+			  -> 接收資料為多筆 type : List<Object[]> rows 
+			  -> 回傳為異動比數	
+         
+		 2.  BatchPreparedStatementSetter + jdbcTemplate.batchUpdate(sql , setter);	
+              -> type : int[] 
+			  -> sql  : value(? ,?)
+			  -> 接收資料為多筆 type : List<類別> 
+              -> 覆寫 BatchPreparedStatementSetter 方法 
+			       
+				   -> setValues(PreparedStatement ps, int i) : ps.get類別(index , 類別.get(i).get...()); // i = index	  
+			       
+				   -> getBatchSize() : 回傳接收資料.size(); 
+			  
+			  -> 回傳為異動比數			 
+  
+  單筆修改 :
+        1. JdbcTemplate.update(sql,參數,...)    // 按照 sql 順序  
+    		  -> type : int 
+			  -> sql  : update emp set ename=? , age=? where eid=?
+			  -> 回傳為異動比數  
+
+  單筆刪除 :
+        1. JdbcTemplate.update(sql,參數,...)    // 按照 sql 順序  
+    		  -> type : int 
+			  -> sql  : delete from 表 where eid=?;
+			  -> 回傳為異動比數   
+  
+  範例實作 : // session06
+         1. 物件(PO persistent object) : Emp(單) / Job(多) // 一個員工可以有多個工作
+              
+			  1-1. Emp (欄位   : eid , ename , age , createtime + 關係 : List<Job> jobs)      // 一個 emp 對應 0~*個 job
+			           (建構式 : 空  & ename , age(因 eid & createtime 是自動產生) + toString)
+              
+			  1-2. Job (欄位   : jid , jname , eid  + 關係 :Emp emp)  // 1 個 job 對應 0 或 1 個 emp	 		  
+			           (建構式 : 空  & jname + toString)
+					   
+		 2. Template -> EmpDao (@Reposirory) // Dao: Data Access Object
+
+--------------------------------------------------------------------------------------------------------------------------------00715
+目錄 : 手動新增 Transaction Manger / Transaction(範例配置)
+
+  1. 手動新增 Transaction Manger :
+       範例 : int[] addTwo(String ename1 , Integer age1 , String ename2 , Integer age2 ){}
+       步驟 : 
+	     0. 綁定 c3p0                              = private ComboPooledDataSource dataSource; 
+         1. 宣告 DataSourceTransactionManger  mag  = new TransactionManger(dataSource);
+         2. 定義 DefaultTransactionDefinition def  = new DefaultTranctionDefinition();
+           2-1. 設定交易屬性 def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
+           2-2. 取得交易狀態 TransactionStatus         = mag.getTransaction(def)
+         3.  try{ CRUD 操作 }
+		     // 錯誤回滾
+		     catch{ mag.rollback(status); }
+		 4. 提交  transactionManager.commit(status);
+
+ 2. Transaction 範例 (db : stock , wallet ,book)		 
+--------------------------------------------------------------------------------------------------------------------------------
+0718
+目錄 : Transaction 交易管理
+  
+  1. Transaction 交易管理 : 是一組由邏輯緊密聯合的一個交易整體多個資料表操作
+  
+  2. 配置 xml 檔
+     <!-- 配置事務管理器 -->
+       <bean id="transactionManager"
+        class="org.springframework.jdbc.datasource.DataSourceTransactionManager"><property name="dataSource" ref="dataSource" ></property>
+       </bean>
+     <!-- 開啟註解驅動，對事務相關的註解進行掃描與解析 -->
+     <tx:annotation-driven transaction-manager="transactionManager"></tx:annotation-driven>
+
+  3. @Transaction 註解配置
+       - 配置在類別(該類別下所有方法)
+	   - 配置在方法(只有當前方法可用)
+	   - 範例 :
+	   @Transaction(
+	     propagation = Propagation. ,   // 傳播行為
+		 isolation   = Isolation.   ,   // 隔離層級
+		 timeout     =              ,   // 交易超時間期
+		 readOnly    = boolean      ,   // 唯讀指示(是否將欄位鎖住)
+		 rollbackFor ={Exception.class} // 根據指定例外進行回滾(RuntimeException 會自動抓取不用 rollbackFor)
+         // 如果例外使用 Exeption , Transaction 的方法都要加 rollbackFor 		 
+	   )
+
+  4. 傳播行為(Propagation) // 事務(tx 交易) , 掛起(不用) // NESTED 不常用
+	   1. Propagation.REQUIRED      : 支持當前事務   , 若當前無事務 , 就新建一個事務(最常見)
+       2. Propagation.SUPPORTS      : 支持當前事務   , 若當前無事務 , 就已無事務進行
+       3. Propagation.MANDATORY     : 支持當前事務   , 若當前無事務 , 就拋出例外
+       4. Propagation.REQUIRED_NEW  : 直接使用事務   , 若當前有事務 , 把當前事務掛起
+       5. Propagation.NOT_SUPPOPTED : 直接使用無事務 , 若當前有事務	, 把當前事務掛起
+       6. Propagation.NEVER         : 直接使用無事務 , 若當前有事務 , 就拋出例外
+       7. Propagation.NESTED        : 支持當前事務   , 如果當前事務存在，則執行一個嵌套事務，如果當前沒有事務，就新建一個事務
+
+  5. 隔離帶來錯誤 
+  
+       1. 髒讀       : 一個事務讀取了另外一個事務未 commit 的資料 
+	        
+			事務1： A給B轉賬500，但是事務未提交。
+            事務2： B檢視了賬戶，發現A轉過來500，本來只轉300過來就好，發現多轉了200，心裡美滋滋。。。
+            事務1： A及時發現多轉了200，修改了轉300，提交事務。		  
+      
+       2. 不可重複讀 : 一個事務在兩次讀取間 , 被其他事務更改 , 導致兩次讀取資料不同
+	       
+		    事務1：B去買東西，卡里有500塊錢，消費100，還沒提交事務。
+            事務2：B的老婆把B的500塊錢轉出去了，已提交事務。
+            事務1：B此時提交事務，支付不了。再次讀取發現卡里沒錢支付。
+	   
+	   3. 幻讀      : 一個事務按相同的查詢條件重新讀取以前檢索過的資料，卻發現其他事務插入了滿足其查詢條件的新資料
+	        
+			事務1 : select id 5 (未有此資料)
+			事務2 : insert id 5 (commit)
+			事務1 : insert id 5 (commit fail)
+	        // 不可重複讀側重表達 讀-讀，幻讀則是說 讀-寫，用寫來證實讀的是鬼影
+     	 
+	   
+
+            	   
+	         
+	        
+	  
+  6. 隔離層級(isolation)
+       1. Isolation.DEFAULT            : 預設(已資料庫預設為準)
+       2. Isolation.READ_COMMITTED     : 讀已提交: 不可重複讀 (針對欄位資料)
+       3. Isolation.READ_UNCOMMITTED   : 讀未提交: 髒讀       (針對欄位資料)
+       4. Isolation.REPEATABLE_READ    : 可重複讀: 幻讀 , 其他人不可以針對指定資料列CRUD (針對欄位列(多欄))
+       5. Isolation.SERIALIZABLE 序列化: 效能低, 消耗大, 但是可以簡單解決上面的問題(實務上不建議使用) (針對資料表)	   
+-------------------------------------------------------------------------------------------------------------------------------- 
+0722+0725 
+目錄 : Springmvc 基本配置
+  
+  1. SpringMVC :  
+       -> 不直接連結所需資源 , 需透過連結 (Front Controller 前端控制器) -> (DispathServlet 分派器) -> (Controller 控制物件)
+  
+  2. SpringMVC 配置 :
+       -> Springmvc-servlet.xml : 
+	       1. <mvc:annotation-driven />                             // 提供 Controller 請求轉發，json自動轉換等功能
+		   2. <context:component-scan base-package="spring.mvc" />  // 掃描檔案
+	       3. <!-- 配置 view 渲染器的位置 -->
+	            <bean id="internalResourceViewResolver"
+		         class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		         <property name="prefix" value="/WEB-INF/view/" />
+		         <property name="suffix" value=".jsp" />
+	            </bean>
+       
+	   -> web.xml :
+           1. <!-- 部署 DispatcherServlet -->
+              <servlet>
+                <servlet-name>springmvc</servlet-name>
+                <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+                <load-on-startup>1</load-on-startup>
+               </servlet>
+		   2. <!-- Springmvc 路徑配置 -->  
+              <servlet-mapping>
+                <servlet-name>springmvc</servlet-name>
+                <url-pattern>/mvc/*</url-pattern>
+              </servlet-mapping>
+
+  3. SpringMVC 各 @ 
+       1. @RequestMapping("") // 路徑配置
+       2. @ResponseBody       // 將回傳資料列印至前端
+	   
+	   // 參數類 public ... 方法(@...){};
+	   3. @RequestParam(value="",required = false) type   名稱  // 取得路徑 ?後面的參數
+	   4. @RequestParam(value="",required = false) List<> 名稱  // 取得路徑 ?後面的同名參數
+	   5. @RequestParam(value="",required = false) Map <> 名稱  // 取得路徑 ?(常用於 form 表單)
+       6. 直接下 entity                                         // pojo 參數自動配置
+	   7. @RequestBody entity                                   // 在 body 中傳送資料 , pom.xml(jackson) josn <-> Bean
+	   8. @PathVariable("") type 名稱                           // 路徑參數(萬用字元: * 任意多字, ? 任意一字)
+
+  4. ModelAndView
+      1. Model(資料) / View(資料渲染呈現)
+	  2. 範例 : 
+	      2-1. 宣告 ModelAndView model = new ModelAndView();
+		       jsp : ${ data } -> controller : model.addObject("data" , ""); model.setViewName(".jsp");
+		  
+		  2-2. 宣告 Model 參數 , 使用 addAttribute() , 回傳為 view 路徑 :
+		       jsp : ${ data } -> controller : model.addAttribute("data" , ""); return ".jsp"; 
+			   // List Map OK
+	  
+	  3. Redirect 重導
+          3-1. return "redirect:/index.jsp";                       // 直接指定
+          3-2. return "redirect:../"       ;                       // 倒退路徑
+          3-3. return "redirect:https://www.twitch.tv/carry_game"; // 向外指定	
+
+--------------------------------------------------------------------------------------------------------------------------------
+0801 :
+目錄 : 解決 Http -> Delete , Put 問題 
+
+  1. HiddenHttpMethodFilter -> web.xml
+     <filter>
+        <filter-name>HiddenHttpMethodFilter</filter-name>
+        <filter-class>org.springframework.web.filter.HiddenHttpMethodFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>HiddenHttpMethodFilter</filter-name>
+        <url-pattern>/mvc/*</url-pattern>
+    </filter-mapping>
+  
+  2. Rest 風格練習 : 
+      1. jsp : product.jsp / product_update / success.jsp
+	  2. controller : productController 
+	  3. entity : product
+
+--------------------------------------------------------------------------------------------------------------------------------
+0807 : 
+目錄 : 練習 spring 表單綁定 jsp
+import : <%@ taglib prefix="spform" uri="http://www.springframework.org/tags/form" %>
+ 
+ 1. 練習 spring 各表單 + SPA 
+      1. jsp : user.jsp // 透過 javascript 操作路徑(fetch)
+      2. controller : UserController
+      3. entity : User
+ 
+ 2. Entity 注意 :
+      1. 日期接收 : @DateTimeFormat(pattern = "yyyy-MM-dd") // 接收的日期格式
+      2. 日期返回 : @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8") // 返回的日期格式
+ 
+ 3. JSP 注意 :
+      0. 修改刪除使用 <a href=""> + javascript(editUser / deleteUser(fetch)) 
+      1. 內自省封裝(物件名稱)+(get(不用寫)方法) 配合 Entity 的方法
+      2. Spring 表單 :
+          2-1. spring form 綁定     -> method="" , modelAttribute="" , action=""
+          2-2. input 等等 ID & Name -> path=""	
+      3. <fmt:formatDate value="${user.birth}" pattern="yyyy-MM-dd"/> 日期標籤		  
+
+--------------------------------------------------------------------------------------------------------------------------------
+0808 :
+目錄 : Spring 表單驗證 / 配置 / 掛載 / 練習
+  
+練習 :
+  1. Controller : PersonController / MyStockController
+  2. Entity     : Person(JSR303)   / MyStock
+  3. validator  :                  / MyStockValidator
+  4. jsp        : person.jsp       / mystock.jsp
+  5. errorMessage.properties
+    
+  
+JSR303(注意) : String           -> @NotEmpty / @Size
+               大部分           -> @NotNull  / @Range
+               不可大於今日日期 -> @Past
+               綁定物件 controller 裡 @Valid 物件 , 驗證結果 BindingResult result 只能重導(redirect)  
+
+手動配置 validation(implements Validator) :
+               1. 先判斷傳進來的 clazz 是否是 MyClass 類
+               2. 驗證是否為空 : ValidationUtils.rejectIfEmpty(errors, "錯誤類", "錯誤訊息");
+               3. 進階驗證     :
+                   3-1. 將 Object target 宣告為要驗證的物件
+				   
+				   3-2. 錯誤訊息in properites : errors.rejectValue("錯誤類","錯誤訊息", new Object[]{帶入參數},"預設訊息"); 
+				     // 帶入參數 -> properites -> EX : mystock.price.range=買進價格必須是昨日收盤價的±10%之間( {0} ~ {1} )  
+                   
+				   3-3. 錯誤訊息 : errors.reject("錯誤類","錯誤訊息");
+
+pom.xml 掛載 :
+  <!-- Hibernate Validator -->
+    <dependency>
+		<groupId>org.hibernate</groupId>
+		<artifactId>hibernate-validator</artifactId>
+		<version>5.4.0.Final</version>
+    </dependency>
+
+spring-servlet.xml 配置 : 
+  <!-- 錯誤訊息設定 properites -->
+	<bean id="messageSource"
+		class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+		<property name="basename"
+			value="/WEB-INF/resource/errorMessage" />
+		<property name="useCodeAsDefaultMessage" value="false" />
+		<property name="defaultEncoding" value="UTF-8" />
+	</bean>
+
+	<!-- JSR 303 Validator 驗證: Hibernate Validator 實作驗證配置 -->
+	<bean id="validator"
+		class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean">
+		<property name="providerClass"
+			value="org.hibernate.validator.HibernateValidator" />
+		<property name="validationMessageSource" ref="messageSource" />
+	</bean>
+
+	<!-- 解決中文 與 JSR 303 Validator 設定 -->
+	<mvc:annotation-driven validator="validator">
+		<mvc:message-converters
+			register-defaults="true">
+			<bean
+				class="org.springframework.http.converter.StringHttpMessageConverter">
+				<property name="supportedMediaTypes">
+					<list>
+						<value>text/html;charset=UTF-8</value>
+					</list>
+				</property>
+			</bean>
+		</mvc:message-converters>
+	</mvc:annotation-driven>
+--------------------------------------------------------------------------------------------------------------------------------
+0813 SpringMVC 與 JDBC
+目錄 : SpringMVC 架構 + JDBC + 分頁功能
+配置 :
+  // 從上方筆記 jdbc-config.xml 內容複製到 spring-servlet.xml
+  1. spring-servlet.xml : c3p0 + jdbc template + named parameter jdbc templat + transaction manager 
+  
+  2. pom.xml : Simple flat mapper , mysql , c3p0 , jdbc 等
+
+練習 :
+  0. DB : web2 -> table(employee(單) , job(多))
+  1. Controller : EmployeeController / JobController
+  2. Entity     : Employee / Job 
+  3. Reposiroty(使用 interface + Impl) :
+      3-1. JobDao   -> JobDaoImpl
+      3-2. Employee -> EmployeeImpl
+             方法 : 每頁筆數     : int LIMIT = 5;
+                    新增         : int add(類);
+                    修改         : int update(類)
+                    刪除         : int delete(Integer id)
+                    查詢所有筆數 : int getCount();
+                    單筆查詢     : 類  get(Integer id)
+                    全筆查詢	 : List<類> query();				
+                    分頁查詢(判斷 HttpSession 值決定分頁狀態) : List<Employee> query(Object httpSessionValue);
+                    分頁查詢     : List<Employee> queryPage(int offset);
+實作遇到問題 :
+jsp : <%@ page isErrorPage="true" %>                        // 開啟所有 Http 方法
+      <c:forEach end="${pageCount}" begin="1" var ="num">   // 開始至結束
+	  ${_method eq 'POST' ? '' : 'disabled' }               // 判斷按鈕狀態
+	  
+	  Spring 驗證 select 自動綁定                    顯示              回傳值
+	  <spform:select path="eid" items="${employees}" itemLabel="ename" itemValue="eid"></spform:select>
+	   
+
+分頁 : 單查多使用 RowMapper + new BeanPropertyRowMapper + (sql += " limit %d offset %d")
+       多查少使用 simpleflatmapper + (sql += " limit %d offset %d")
+
+分頁 + session :  
+ 路徑 -> Controller :
+                      1. @GetMapping(value = "/page/{num}") -> 儲存 HttpSession
+					  2. @GetMapping(value = "/{jid}")      -> 取得 query(Object httpSessionValue)
+		   
+       // 以下為 Dao     
+	   1. 透過 HttpSession 的 setAttribute 紀錄 nums > 0
+           int offset = (num-1) * jobDao.LIMIT;
+		   if(offset>=0) {
+			  httpSession.setAttribute("offset_job", offset);
+		    }else {
+			  httpSession.removeAttribute("offset_job");
+		    }
+	
+       2. 取得單筆時透過 query(Object httpSessionValue) 判斷是否要全查詢或queryPage		
+  		    if(httpSessionValue == null) {
+			   return query();
+		    }
+		       return queryPage((int)httpSessionValue);			  
+		  
+	        
+              	     
+        
+	    
+	      
+             
