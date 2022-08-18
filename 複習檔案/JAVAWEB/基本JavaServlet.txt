@@ -29,6 +29,9 @@ web.xml 配置路徑 :
  
  2. String[] = req.getParameterValues("name");
 
+取得 Header 參數
+ 1. String = resp.getHeader(""); -> 內容過濾 if(headerValue.contains(""))
+
 Enumeration 類實作 :
  // 取得前端參數名稱
  Enumeration<String> names = req.getParameterNames();
@@ -66,8 +69,9 @@ Enumeration 類實作 :
   3. calcArea.html  + AreaCalcServlet + CalcAreaService -> 練習 HttpServlet and @配置 + 接收請求(多種方式) 
   4. employee.html  + EmployeeServlet + EmployeeService -> 練習 HttpServlet and @配置 + 接收請求 + req(java8) + sendError
   5. employee.html  + BabyQRServlet                     -> 練習將資料夾圖片顯示於網頁
-  6.                  HeaderServlet -> 取得 Header 練習
-  7. message_form   + messageServlet                    -> 練習 HttpServlet and @配置 + LineAPI 
+  6.                  HeaderServlet                     -> 取得 Header 練習
+  7.                  TodayHeaderServlet                -> 取得 Header 練習
+  8. message_form   + messageServlet + messageService   -> 練習 HttpServlet and @配置 + LineAPI 
 ------------------------------------------------------------------------------------------------
 calcArea.html  + AreaCalcServlet + CalcAreaService 練習多組接收後端處理
 回傳需求 : 結果 + 方法 + 參數
@@ -112,4 +116,144 @@ calcArea.html  + AreaCalcServlet + CalcAreaService 練習多組接收後端處�
                         case 2: // 球體積  Math.pow(r, 3) * Math.PI * 4/3;
                  4-2-2. default : area = -1;
           4-3 回傳 area;				 
-		  		  
+------------------------------------------------------------------------------------------------		  		  
+message_form   + messageServlet + messageService + message_result.jsp   -> 練習 HttpServlet and @配置 + LineAPI 
+https://developers.line.biz/en/docs/messaging-api/sticker-list/#sticker-definitions 貼圖網址
+https://notify-bot.line.me/doc/en/ // 規格
+回傳需求     : 貼圖(片)呈現 in web and line
+Line貼圖組合 : stickerPackageId + stickerId
+注意重點 : html    -> js 取得 webImageUrl 要清除空白
+           servlet -> 接收回傳型態與重導
+		   service -> 方法只有接收 data 時設定的參數不同 / 發送與回應要使用串流
+
+ 1. message_form : 
+     1. script :
+         1. 預覽貼圖  previewSticker()  
+             1. 得到貼圖ID的值
+			 2. 加上 url : 
+			     var imgUrl = "https://stickershop.line-scdn.net/stickershop/v1/sticker/" + stickerId + "/android/sticker.png";
+			     // 此網址是圖片原始碼中的連結對圖片右鍵檢查
+			 
+			 3. 加上預覽 :
+			    document.getElementById('previewStickerArea').innerHTML = "<img valign='middle' width='100' src='" + imgUrl + "'>";
+			 
+         2. 預覽Web圖 previewWebImage()
+		     
+			 1. 得到網圖ID的值
+			 2. 將空白去除 trim();
+			 3. 如果網圖ID的值 != ''
+			     3-1. 如果網圖ID的值找不的到 'http://' >=0 or 'https://' >=0 自動在網址前面加上 https://
+				      if(!(webImageUrl.indexOf('http://') >= 0 || webImageUrl.indexOf('https://') >= 0)) {}
+				 
+				 3-2 得到網圖ID的值 = 'https://' + 網圖ID的值
+				 3-3 重新抓取網圖ID的值 
+  
+             4. 加上預覽 :
+			    document.getElementById('previewWebImageArea').innerHTML = "<img src='" + webImageUrl + "'>";
+  
+         3. 表單傳送前的驗證 beforeSubmit()
+		     
+			 1. 檢查訊息內容是否有資料? : 得到內容 ID 值
+			 2. 如果為空 : 警告('請輸入訊息內容 !') / document.getElementById('content').focus(); / return false
+			 3. 若 webImageUrl 欄位有資料且前面沒有加上http:// 或 https://, 則統一補上 https://
+			 4. 回傳 ture
+		 
+	 
+	 2. html(格式 <form><fieldset><legend></legend></fieldset></form>)
+         1. <form class="pure-form" method="post" onsubmit="return beforeSubmit()" action="/JavaWeb-20220803/servlet/message">
+         2. type:textarea / name , id = content
+         3. type:number   / name , id = stickerPackageId / value ="貼圖群組號碼" // 6325 
+         4. type:number   / name , id = stickerId        / value ="貼圖號碼"     // 10979907  
+		    onchange="previewSticker()" style="width: 120px"                     // onchange : 觸發 js 改變內容值
+         
+		 5. type:button   / onclick="previewSticker()" class="pure-button pure-button-primary"
+         6. <span id="previewStickerArea"></span> 預覽貼圖位置
+         7. type:text     / name , id = webImageUrl value=""		 
+         8. type:button   / onclick="previewWebImage()" class="pure-button pure-button-primary"
+		 9. <div id="previewWebImageArea"></div> 預覽網圖位置
+		10. type:submit  class="pure-button pure-button-primary"
+
+ 2. MessageService :
+     1. 取得 LineNotify 發行權杖(String token) : 2RV1yVXIa5jczTwq4bZMIO4yNDcHj1YvC15ue38tLQf 
+	 2. 準備方法 : int  pushMessageAndWebImage / 
+	                    pushMessageAndSticker(String content, String stickerPackageId, String stickerId)(更改第二步驟的對應名稱) / 
+						pushMessage(String content)(更改第二步驟只需 message)
+	 3. 方法實作 :
+	     1. pushMessageAndWebImage(String content, String webImageUrl)
+             
+			 1. 取得服務            url      : https://notify-api.line.me/api/notify
+			    並設定預設網路狀態  httpcode : 0;
+             
+			 2. 將要發送並編碼 -> byte[] postData =  
+			    ("message=" + content + "&imageThumbnail=" + webImageUrl + "&imageFullsize=" + webImageUrl).getBytes("UTF-8");
+                // 名稱按照 notify 規格
+				// imageThumbnail + imageFullsize 網路圖片
+				// stickerPackageId + stickerId   貼圖
+             
+			 3. 建立 url 物件 new URL(url);
+
+             4. 開啟 HttpURLConnection(聯繫) (HttpURLConnection)url.openConnection(); 
+                  4-1. 開啟 URL 連線模式 : setDoOutput(true)
+                  4-2. 設定回傳方法      : setRequestMethod("POST")
+                  4-3. 設定 Header 內容  : setRequestProperty("Authorization", "Bearer " + token);
+                                         : setRequestProperty("Content-Type", "application/x-www-form-urlencoded"); //非必要
+				  4-4. 關閉快取          : setUseCaches(false);	
+             
+             5. 發送並回應(建立串流帶入資料串流) :
+ 			      5-1. DataOutputStream oos = new DataOutputStream(conn.getOutputStream())
+				  5-2. 將資料印出 write(postData) , 刷新 flush();
+				  5-3  取得目前聯繫狀態 != HttpURLConnection.HTTP_CREATED 將 httpcode = 取得目前聯繫狀態
+			 
+			 6. 回傳 httpcode
+
+  3. messageServlet :
+      1. 設定接收回傳型態 :
+	       req.setCharacterEncoding("utf-8");
+		   resp.setCharacterEncoding("utf-8");
+		   resp.setContentType("text/html;charset=utf-8");
+      
+	  2. 接收前端資訊 : 
+           String content = req.getParameter("content");
+		   String stickerPackageId = req.getParameter("stickerPackageId");
+		   String stickerId = req.getParameter("stickerId");
+		   String webImageUrl = req.getParameter("webImageUrl");
+
+      3. 建立推播服務 :
+	       MessageService messageService = new MessageService(); // 取得 Service
+	
+	  4. 取得 messageService 進行訊息推播並回傳 httpCode 狀態值 : 
+	  
+	  5. 最後將必要訊息收集並重導給 jsp 去呈現
+	       RequestDispatcher rd = req.getRequestDispatcher("/WEB-INF/jsp/message_result.jsp");
+		   req.setAttribute("content", content);
+		   req.setAttribute("stickerId", stickerId);
+		   req.setAttribute("webImageUrl", webImageUrl);
+		   req.setAttribute("httpCode", httpCode);
+		   rd.forward(req, resp);
+
+ 4. message_result.jsp		   
+     <%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+     <!DOCTYPE html>
+     <html>
+     <head>
+     <link rel="stylesheet"
+	   href="https://unpkg.com/purecss@2.1.0/build/pure-min.css">
+     <meta charset="UTF-8">
+     <title>Message result</title>
+	 </head>
+		<body style="padding: 20px">
+			<form class="pure-form" action="/JavaWeb-20220418/html/message_form.html">
+				<fieldset>
+					<legend>Message result:</legend>
+						訊息內容: ${ content }<p />
+						貼圖: <img src="https://stickershop.line-scdn.net/stickershop/v1/sticker/${ stickerId }/android/sticker.png"><p />
+						網路圖片: <img src="${ webImageUrl }"><p />
+						回應碼(Http Code): ${ httpCode }<p />
+						<button type="submit" class="pure-button pure-button-primary">
+							返回
+						</button>
+				</fieldset>
+			</form>
+		</body>
+	</html>

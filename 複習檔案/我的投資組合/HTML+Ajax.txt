@@ -63,7 +63,10 @@ JavaScript
  3. json       : JSON.stringify(序列畫);
 ---------------------------------------------------------------------------------
 Ajax : https://ithelp.ithome.com.tw/articles/10244565
-
+ 0. 注意 : 1. item... 取得內容直 , 是照 get/set 的取小名稱取得(應該)
+           2. 取得欄位內容先取得內容再刪除空白
+		   3. 清除 table 內容是 table tbody 的 tr
+ 
  1. ajax 基本格式 : 
       $.ajax({
          url:,
@@ -107,6 +110,8 @@ Ajax : https://ithelp.ithome.com.tw/articles/10244565
  10. 下拉選單 -> get得到 datas -> datas.mpa(function(data){
                  $('#下拉選單 name').append('<option value="' + data.id + '">' + data.name + '</option>')
                  }) 	 
+
+			 
 ---------------------------------------------------------------------------------
 home.html
 
@@ -179,3 +184,29 @@ HTML ID & class  :
        -> 得到 datas -> 將原表單清除 
        -> 放入表單資料(撰寫html : <tr><td>{1}</td></re>)
        -> 找到 table .append(String.format(html,...))
+
+---------------------------------------------------------------------------------
+Investor.html(登入功能未做專案整體完整在做(table 登入按鈕 , Session)) :
+
+session部分最後做 :
+
+HTML ID & class  : 
+  1. form   : myform
+  2. input  : id , username(String) , email(email) , balance(number)
+  3. button : add(success) , upt(info)  , del(danger) , rst(warning)  // btn btn-
+  4. table  : mytable class="table table-striped table-responsive-md"	   
+
+Ajax(載入時運行) :
+  1. 新增 : 點擊(add) -> 序列畫轉json + ajax  
+  2. 修改 : 點擊(upt) -> 序列畫轉json + ajax(url 需要 jsonobj.id)
+  3. 刪除 : 點擊(del) -> 找到表單 id  + ajax(無須帶入資料)
+  4. 將 table 資訊放入 form ;  
+  
+
+Function // 不包含載入時運行 
+  1. 按鈕狀態(initPageSetup())
+
+  2. Table 顯示(table_list()) 
+       -> 得到 datas -> 將原表單清除 
+       -> 放入表單資料(撰寫html : <tr><td>{1}</td></re>)
+       -> 找到 table .append(String.format(html,...))  
