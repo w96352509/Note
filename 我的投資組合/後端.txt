@@ -1,0 +1,134 @@
+資料庫關係 :
+(多方(擁有方))•----◇(單方())  
+ • 表示外建使用他表主鍵
+ ◇ 表示外鍵不是使用他表主鍵
+ 
+ 在一對多/多對一關係中，擁有方通常在關係的多方定義 。它通常是擁有外鍵的一方。
+ @JoinColumn註釋定義了擁有方的實際物理映射：
+ 
+ EX : STsock , Classify
+ // 它只是意味著我們的 Tstock 實體將有一個名為 classify_id 的外鍵列， 它引用我們的 Classify 實體的主要屬性id
+ 多方 : @ManyToOne + @JoinColumn(name="classify_id" , referencedColumnName = "id");
+        
+ // mappedBy的值是擁有方的關聯映射屬性的名稱 , 因 STsock 與 Classify 有關聯 
+ // 所以在 Classify 實體使用 mappedBy 建立連線
+ 單方 : @OneToMany(mappedBy = "classify") 
+ 
+ 
+ @ManyToOne                 // 多方(擁有者)
+ @JoinColumn(name = "classify_id", referencedColumnName = "id")
+ @JsonIgnoreProperties("tStocks")
+ private Classify classify; // 引用端
+
+ @OneToMany(mappedBy = "classify") // 建立引用端連線
+ @JsonIgnoreProperties("classify") 
+ private Set<TStock> tStocks;
+
+Entity 注意部分
+ 1. @Id 規劃 IDENTITY
+ 2. @JsonIgnoreProperties("") // 重要
+ 
+-------------------------------------------------------
+Controller 注意部分
+ 1. 得到前端資料為 @RequestBody Map<String , String>
+ 2. @RestController
+ 
+-------------------------------------------------------
+PageController("/page")
+  /*  
+   * -------------------------------------------------
+   * METHOD PATH                     Desp
+   * -------------------------------------------------
+   * GET    {"/home"}                return "home";
+   * GET    {"/classify"}            return "classify";
+   * -------------------------------------------------
+   */
+  
+
+-------------------------------------------------------
+Classify
+ 1. Entity : 
+      @Id     : id(Integer) 
+      @Column : name(String) , tx(Boolean)
+	  關係    : 單(Classify) <-> 多(TStock) // Set<> , 不帶入 json
+ 
+ 2. Repository : extend JpaRepository<Classify , Integer>
+ 
+ 3. Controller :
+  
+  /* /classify 
+   * -------------------------------------------------
+   * METHOD PATH                     Desp
+   * -------------------------------------------------
+   * GET    {"/", "/query"}           查詢全部資料     findAll()          
+   * GET    {"/{id}", "/get/{id}"}    查詢單筆資料     get // 使用 Optional
+   * POST   {"/", "/add"}             新增資料         add      @Transactional
+   * PUT    {"/{id}", "/update/{id}"} 修改資料(根據ID) update   @Transactional
+   * DELETE {"/{id}", "/delete/{id}"} 刪除資料(根據ID) delete
+   * -------------------------------------------------
+   */
+	  
+-------------------------------------------------------
+TStock
+ 1. TStock :
+      @Id     : id(Integer)
+      @Column : symbol(String) , name(String) , BigDecimal(preClosed , price , changePrice , changeInPercent) , volumn(Long)
+	            transactionDate(Date) + @Temporal(TemporalType.TIMESTAMP)
+	  關係    : 單(Classify) <-> 多(TStock) // 不帶入 json
+
+ 2. TStockRepository :
+     
+     // 更新基礎資訊 	 
+	 @Transactional
+	 @Modifying
+	 @Query(value = "UPDATE TStock SET name=?2, symbol=?3, classify_id=?4 WHERE id=?1", nativeQuery = true)
+	 public void update(@Param("id") Integer id, @Param("name") String name, @Param("symbol")  String symbol,
+					    @Param("classify_id") Integer classify_id);
+	
+	 // 更新進階資訊
+	 @Transactional
+     @Modifying
+     @Query(value = "UPDATE TStock SET change_price=?2, change_in_percent=?3, pre_closed=?4, price=?5, transaction_date=?6, volumn=?7 WHERE id=?1", nativeQuery = true)
+     public void updatePrice(@Param("id") Integer id, @Param("changePrice") BigDecimal changePrice, 
+					    	 @Param("changeInPercent") BigDecimal changeInPercent, @Param("preClosed") BigDecimal preClosed, 
+					    	 @Param("price") BigDecimal price, @Param("transactionDate") Date transactionDate, 
+					    	 @Param("volumn") Long volumn);
+ 
+ 3. TStockController :
+    
+  /* /tstock 
+   * -------------------------------------------------
+   * METHOD PATH                     Desp
+   * -------------------------------------------------
+   * GET    {"/", "/query"}           查詢全部資料     query
+   * GET    {"/{id}", "/get/{id}"}    查詢單筆資料     get    // 使用 Optional           
+   * POST   {"/", "/add"}             新增資料         add    // 如果 Classify 回傳 null @Transactional
+   * PUT    {"/{id}", "/update/{id}"} 修改資料(根據ID) update // 如果   = null 回傳 null @Transactional 
+   * DELETE {"/{id}", "/delete/{id}"} 刪除資料(根據ID) delete // 如果   = null 回傳 null @Transactional
+   * -------------------------------------------------
+   */	
+
+-------------------------------------------------------
+Invsetor
+
+ 1. Invsetor :
+      @Id     : id(Integer)
+      @Column : name(String) , email(String) , blance(Integer)
+	  關係    : 單(Invsetor) <-> 多(Watch)     // 不帶入 json , 同步刪除 
+	            單(Invsetor) <-> 多(Portfoilo) // 不帶入 json 
+
+ 2. Repository : extend JpaRepository<Classify , Integer>
+
+ 3. InvsetorController :
+    
+  /* /invsetor 
+   * -------------------------------------------------
+   * METHOD PATH                     Desp
+   * -------------------------------------------------
+   * GET    {"/", "/query"}           查詢全部資料     query
+   * GET    {"/{id}", "/get/{id}"}    查詢單筆資料     get    // 使用 Optional 
+   * POST   {"/", "/add"}             新增資料         add    // 包含新增 Watch          @Transactional
+   * PUT    {"/{id}", "/update/{id}"} 修改資料(根據ID) update // 如果   = null 回傳 null @Transactional 包含修改 Watch
+   * DELETE {"/{id}", "/delete/{id}"} 刪除資料(根據ID) delete // 如果   = null 回傳 null @Transactional // Entity 有同步刪除
+   * -------------------------------------------------
+   */	 
