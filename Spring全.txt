@@ -838,11 +838,154 @@ jsp : <%@ page isErrorPage="true" %>                        // 開啟所有 Http
   		    if(httpSessionValue == null) {
 			   return query();
 		    }
-		       return queryPage((int)httpSessionValue);			  
-		  
+		       return queryPage((int)httpSessionValue);	
+
+--------------------------------------------------------------------------------------------------------------------------------
+0819
+目錄 : @ControllerAdvice + @ExceptionHandler + @ModelAttribute 運用	/ 加密 demo
+ 
+ 1. @ControllerAdvice(類似Aop功能) + @ExceptionHandler(指定例外拋出頁面) + @ModelAttribute(只要有 @Controller 都可使用)
+   
+ 2  自訂義的 @ExceptionHandler = RuntimeException
+      = @ Component + implements HandlerException 
+	  + @Override resolveException(return ModelAndView(需設定setViewName(""))) 
+	 
+ 3. 當自訂義的 @ExceptionHandler 和  @ControllerAdvice + @ExceptionHandler 同時存在時已 @ControllerAdvice 為主 
+ 		  
 	        
-              	     
-        
-	    
-	      
+練習 @ControllerAdvice + @ExceptionHandler + @ModelAttribute 運用 :
+
+ 0. 錯誤要拋出訊息 : ex(錯誤內容) + referer(是 Headler 中儲存上一個 url 的位置的地方)
+
+ 1. Controller : DivController( index 主頁 / post -> result 回傳結果與十整除拋出 RuntimeException ) /
+                 GlobalController(練習 @ControllerAdvice + @ExceptionHandler(RuntimeException) + @ModelAttribute)
+ 
+ 2. MyGlobalHandlerException : MyGlobalHandlerExceptionResolver(自訂義練習)			
+
+ 3. Entity : div -> int x , y , result 
+
+-------------------------------------------------------------------------------------------------------------------------------- 
+0819
+目錄 : 加密 demo        
+/*
+ * DES 對稱加密 (雙向)
+ * DES 演算法為密碼體制中的對稱密碼體制，又被成為美國數據加密標准，是 1972 年美國 IBM 公司研制的對稱密碼體制加密演算法。 
+ * 明文按 64 位進行分組, 密鑰長 64 位，密鑰事實上是 56 位參與 DES 運算
+ * （第 8、16、24、32、40、48、56、64 位是校驗位， 使得每個密鑰都有奇數個 1）
+ * 分組後的明文組和 56 位的密鑰按位替代或交換的方法形成密文組的加密方法。
+*/
+
+ // 需先在 C:\Users\vic\git\SpringMVC20220722\ 建立 key 資料夾
+ 1. DESEncryptDemo :
+     1. 設定密鑰位置(String key) = "C:\Users\vic\git\SpringMVC20220722\key";
+
+ 2. DESEncryptService :
+     1. 宣告物件 : 
+	      // KeyGenerator 提供對稱密鑰生成器的功能，支持各種演算法
+             private KeyGenerator keygen;
+          
+		  // SecretKey 負責保存對稱密鑰
+             private SecretKey secretkey;
+    
+	      // Cipher 負責完成加密或解密工作
+             private Cipher cipher;
+	
+	2. 方法 :
+	     
+		 // 生成 .key 檔案
+		 1. DESEncryptService(String path) throws Exception // 生成密鑰 
+		     
+			 1. 生成實例(Instance) : KeyGenerator keygen = KeyGenerator.getInstance("DES");
+		        // 實例化支持 DES 演算法的密鑰生成器(演算法名稱命名需按規定，否則拋出異常)
+			
+             2. 新建 path 檔案 : File file = new File(path);
+ 
+             3. 判斷檔案使否已經存在 : if(file.exists){
+			    
+				 3-1. 宣告物件內串流(ObjectInputStream(帶入宣告檔案內串流(FileInputStream(file))))
+			     3-2. 從保存密鑰的 SecretKey 透過物件內串流讀得 SecretKey
+				}else{
+				 
+				 3-3. 生成密鑰(KeyGenerator) : secretkey = keygen.generateKey();
+				 3-4. 宣告物件內串流(ObjectInputStream(帶入宣告檔案內串流(FileInputStream(file))))
+				 3-5. 透過物件內串流寫入 
+				}
+              
+			  4. 生成 Cipher 物件,指定其支持的 DES 演算法實例(Instance) 
+			       cipher = Cipher.getInstance("DES"); // Cipher 負責完成加密或解密工作
+			  
+		 2. byte[] encrytor(String str) throws Exception  // 生成加密編碼
+		      
+			  1. 根據密鑰，對 Cipher 物件進行初始化，ENCRYPT_MODE 表示加密模式 和得到密鑰保管
+			       cipher.init(Cipher.ENCRYPT_MODE, secretkey);
+				   
+			  2. 將得到字串轉 String : byte[] src = str.getBytes();
+
+              3. 加密，結果保存進 cipherByte 該字節數組負責保存加密的結果
+                   byte[] cipherByte = cipher.doFinal(src);			  
+		      
+			  4.  return cipherByte;
+		
+         3. byte[] decryptor(byte[] buff) throws Exception  // 解密方法
+              
+			  1. 根據密鑰，對 Cipher 物件進行初始化，ENCRYPT_MODE 表示加密模式 和得到密鑰保管
+			  
+			  2. 解密，結果保存進 cipherByte 該字節數組負責保存解密的結果
+			  
+			  3. return cipherByte;
+
+         // 因是雙向 , 所以生成與解鎖可以透過 cipher.doFinal(); 互轉
+
+練習 :
+ 1. DESEncryptService(生產 DES 加密 .key 檔) + DESEncryptDemo(主程式)
+ 
+
+--------------------------------------------------------------------------------------------------------------------------------
+8/20 MD5 加密
+目錄 : MD5DigestDemo 加密練習 
+
+    //取得加密資料
+	public static String getEncryptString(String input) throws Exception {
+		// 取用 MD5
+		MessageDigest md5 = MessageDigest.getInstance("MD5");
+		
+		// 轉成 MD5 格式
+		byte[] result = md5.digest(input.getBytes());
+		
+		// 印出 16 進為字串格式(32個字不足補0), %X 16進位
+		String output = String.format("%032X", new BigInteger(result)); 
+		
+		return output;
+	}   
+	
+    // 主程式     
+	public static void main(String[] args) throws Exception {
+		// 鹽(增強加密用)
+		String salt = "abc";
+		
+		// 密碼加密
+		String input = "1234"; 
+		
+		// 取得加密碼
+		String output = getEncryptString(input + salt);
+		
+		System.out.println("資料庫密碼欄位存放: " + output);
+		
+		// 登入
+		Scanner scanner = new Scanner(System.in);
+		System.out.print("請輸入密碼: ");
+		String pwd = scanner.next();
+		pwd = pwd + "abc";
+		
+		// 取得加密碼
+		String pwdMD5 = getEncryptString(pwd);
+		System.out.println("使用者所輸入的密碼加密後的結果: " + pwdMD5);
+		
+		// 比對
+		if(output.equals(pwdMD5)) {
+			System.out.println("登入成功");
+		} else {
+			System.out.println("登入失敗");
+		}
+	}      
              
