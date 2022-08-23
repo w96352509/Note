@@ -988,4 +988,15 @@ jsp : <%@ page isErrorPage="true" %>                        // 開啟所有 Http
 			System.out.println("登入失敗");
 		}
 	}      
-             
+
+--------------------------------------------------------------------------------------------------------------------------------
+823 springDate JPA
+配置 : 參考 gitnub SpringMVC20220722-> springmvc-servlet.xml 
+步驟 : interface extends JPARepository
+
+/*
+ * 方法命名規則
+ * 1. 查詢方法以 find | read | get 開頭
+ * 2. 涉及條件查詢時，條件的屬性（首字母大寫）用條件關鍵字（例如：And、Or）連結
+ * 
+ */           
