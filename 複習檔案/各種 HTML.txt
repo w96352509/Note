@@ -1,0 +1,8 @@
+Form :
+ 1. WEB
+    
+	圖片編碼 : enctype="multipart/form-data"
+	
+ 2. Spring 綁定
+ 
+ 3. thymeleaf

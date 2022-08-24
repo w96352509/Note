@@ -1,0 +1,101 @@
+開發環境 : java8
+練習 : web upload + IOUtils 
+
+upload 範本練習
+ pom.xml 加上 org.apache.commons.io 
+ 重點 : HTML 編碼格式 : enctype="multipart/form-data" , 因圖檔較大使用 post 
+        Servlet -> @MultipartConfig
+ 
+ 範本 : upload_form + uploadServlet
+ 
+ 
+ HTML :
+  // 純文字檔路徑 : /file , 圖檔 : /image
+  // 純文字檔 
+  1. <form  class="pure-form" 
+            enctype="multipart/form-data" 
+			method="post" 
+			action="/JavaWeb-20220803/servlet/upload/file" >
+  	 <fieldset>
+      <legend>Upload Form</legend>
+	  <input type="text" name="cname" placeholder="文件名稱" /> <p />
+	  <input type="file" name="upload_file" class="pure-button" />    <p />
+	  <button type="submit" class="pure-button pure-button-primary"> 上傳 </button>
+     </fieldset>
+     </form>
+  
+  // 圖檔	 
+  2. <form  class="pure-form" 
+            enctype="multipart/form-data" 
+			method="post" 
+			action="/JavaWeb-20220803/servlet/upload/image" >
+  	 <fieldset>
+      <legend>Upload Form</legend>
+	  <input type="text" name="cname" placeholder="圖片名稱" /> <p />
+	  <input type="file" name="upload_file" class="pure-button" />    <p />
+	  <button type="submit" class="pure-button pure-button-primary"> 上傳 </button>
+     </fieldset>
+     </form>
+
+ UploadServlet :
+  1. 路徑 : servlet/upload/*
+  2. 接收 : post
+  3. 方法 : doPost / uploadFile / uploadImage
+      
+	  1. doPost :
+	       - 取得接收路徑尾 : String pathInfo = req.getPathInfo();
+		   - 將得到 pathInfo 透過 switch 判斷要執行的方法
+		      switch (pathInfo) {
+                case "/file":
+                  uploadFile(req, resp);
+                  break;
+                case "/image":
+                  uploadImage(req, resp);
+                  break;
+                }
+	   
+      2. uploadFile : 處理名稱 cname + 純文字檔
+           - 上傳表單資料通常用 getParts() 取得 part 物件 , 
+		     req.getParts()                                  // 取得 part 物件
+			 .stream()                                       // 轉串流
+			 .filter(part -> part.getName().equals("cname")) // 取得 cname or upload_file(文字) 內容
+			 .forEach(part -> {                              // 使用 forEach 取得各資料配合 Lambda 表達式處理
+			                                                
+						// 將得到檔案轉 IO 流 , 並透過 IOUtils 工具設定編碼和處理 IO
+			            String cname = IOUtils.toString(part.getInputStream(), StandardCharsets.UTF_8.name()); 
+					  });
+     
+     3. uploadImage : 處理名稱 cname + 圖檔	
+          - cname 同上
+          - 上傳表單資料通常用 getParts() 取得 part 物件 , 
+		     req.getParts()                                        // 取得 part 物件
+			 .stream()                                             // 轉串流
+			 .filter(part -> part.getName().equals("upload_file")) // 取得 upload_file(圖檔) 內容
+			 .forEach(part -> {                                    // 使用 forEach 取得各資料配合 Lambda 表達式處理
+			           
+					   // 製作 base64 圖片碼 
+				       // 步驟將 InputStream -> byte[] --> base64 字串                                    
+					   InputStream is = part.getInputStream(); // 取得 IO 
+					   byte[] bytes = IOUtils.toByteArray(is); // 透過 IOUtils 工具轉 byte[]
+                       String base64 = Base64.getEncoder().encodeToString(bytes); // 轉 64 編碼					   
+					   
+					   // 建立 HTML src 標籤
+				       String imageHtml = "<img src='data:image/png;base64, %s'>";
+					   out.print(String.format(imageHtml, base64));
+					   
+					   // 設定存檔資料夾
+					   String path ="C:\\upload" ;
+					   
+					   // 確認資料夾是否存在
+					   File folder = new File(path);
+                        if(!folder.exists()) {
+                            folder.mkdir(); // 建立資料夾
+                        }
+						
+					   // 取得上傳檔案名稱
+					   String fname = part.getSubmittedFileName();
+						
+					   // 存檔
+					   part.write(path + \\ + fname);
+					   
+					  });
