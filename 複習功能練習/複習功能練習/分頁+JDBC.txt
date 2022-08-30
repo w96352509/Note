@@ -1,0 +1,379 @@
+開發工具 : Eclipes
+開發環境 : Java8
+練習     : JDBC(分頁) + validation + JSP
+Entity   : Job + Employee
+Controller : EmployeeController , Jobcontroller
+Repository : EmployeeDao , EmployeeDaoImpl , JobDao , JobDaoImpl
+WEB-INF -> resource : errorMessage.properties
+注意     : 不分頁查詢用聯集查詢(letf等)配合 JdbcTemplateMapperFactory / sql 取名要 ... as table名稱_欄位名稱
+           分頁查詢用 jdbc 方法組合 
+
+成品 : https://github.com/w96352509/SpringMVC20220722/tree/main/src/main/java/spring/mvc/session13 		   
+-------------------------------------------------------------------------------
+掛載 : 使用練習用的 pom.xml;
+ 
+-------------------------------------------------------------------------------
+實作 :
+ sql :
+  create table if not exists employee(
+   eid integer primary key not null auto_increment,
+   ename varchar(30),
+   salary integer,
+   createtime datetime default current_timestamp 
+   );
+
+  create table if not exists job(
+   jid integer primary key not null auto_increment,
+   jname varchar(30),
+   eid integer not null,
+   foreign key(eid) references employee(eid)
+   );
+ 
+ Entity :
+  - Employee : eid , ename(2~10 + 不可空) , salary(3w8~30w + 不可空) , createtime , jobs
+  - Job      : jid , jname(2~10 + 不可空) , eid , employee
+
+ Repository :
+  - EmployeeDao : 每頁筆數 / 新增 / 修改 / 刪除 / 查詢所有筆數 / 查詢單筆 / 不分頁查詢全部 / 
+                  分頁查詢(判斷 HttpSession 值決定分頁狀態) / 分頁查詢
+  - JobDao      : 同上
+ 
+ Controller :
+  - EmployeeController :
+  /*  
+   * -------------------------------------------------
+   * METHOD PATH                     Desp
+   * -------------------------------------------------
+   * getPageCount()
+   * GET    {"/"}                    return "session13/employee"; 
+   * GET    {"/page/{num}"}          return "session13/employee";
+   * GET    {"/{eid}"}               return "session13/employee";
+   * POST   {"/"}                    return "redirect:./";
+   * Update {"/"}                    return "redirect:./";
+   * Delete {"/"}                    return "redirect:./";
+   * -------------------------------------------------
+   */        
+
+	  
+  - Jobcontroller :
+-------------------------------------------------------------------------------
+實作注意 :
+ EmployeeDaoImpl 跟 JobDaoImpl 方法相同更改參數即可除了 JobDaoImpl 的分頁查詢使用聯集
+ 
+ EmployeeController / Jobcontroller 方法相同更改參數即可
+
+-------------------------------------------------------------------------------
+Repository方法實作 : @AutoWrite JdbcTemplate jdbcTemplate
+   
+   EmployeeDaoImpl :      
+	  
+	  - 新增 int add(Employee employee) : 
+          1. String sql = "insert into employee(ename , salary) value(?,?)";
+          2. return jdbcTemplate.update(sql, employee.getEname(), employee.getSalary());
+      
+      - 修改 int update(Employee employee) :
+          1. String sql = "update employee set ename=? , salary=? where eid=?";
+          2. return jdbcTemplate.update(sql, employee.getEname(), employee.getSalary(), employee.getEid());
+      
+      - 刪除 int delete(int eid) :
+          1. String sql = "delete from employee where eid=?";
+          2. return jdbcTemplate.update(sql, eid);
+      
+      - 查詢所有筆數 int getCount() :
+          1. String sql = "select count(*) from employee";
+          2. return jdbcTemplate.queryForObject(sql , Integer.class);
+      
+      - 查詢單筆 Employee get(Integer eid)
+          1. String sql = "select eid , ename , salary , createtime from employee where eid=?";
+          2. Object[] args = {eid};
+          3. return jdbcTemplate.queryForObject(sql, args, new BeanPropertyRowMapper<Employee>(Employee.class));
+      
+      - 不分頁查詢全部 List<Employee> query()
+          1. String sql = "select e.eid , e.ename, e.salary, e.createtime , "
+				        + "j.jid as job_jid , j.jname as job_jname, j.eid as job_eid "
+				        + "from employee e left join job j on e.eid = j.eid ";	   
+		  2. ResultSetExtractor<List<Employee>> resultSetExtractor = JdbcTemplateMapperFactory.newInstance()
+		                                                                                      .addKeys("eid")
+				                                                                              .newResultSetExtractor(Employee.class);
+		  3. return jdbcTemplate.query(sql, resultSetExtractor);
+	
+      - 分頁查詢(判斷 HttpSession 值決定分頁狀態) List<Employee> query(Object httpSessionValue)	
+	      1. if(httpSessionValue == null) { return query(); }
+		  
+		  2. return queryPage(Integer.parseInt(httpSessionValue + ""));
+	 
+      - 分頁查詢 List<Employee> queryPage(int offset)
+          1. String sql = "select e.eid, e.ename, e.salary, e.createtime from employee e order by e.eid "; // 主查詢
+          2. RowMapper<Employee> rm = (ResultSet rs, int rowNum) -> {
+		      Employee employee = new Employee();
+			  employee.setEid(rs.getInt("eid"));
+			  employee.setEname(rs.getString("ename"));
+			  employee.setSalary(rs.getInt("salary"));
+			  employee.setCreatetime(rs.getDate("createtime"));
+			  // 副查詢
+			  String sql2 = "select j.jid, j.jname, j.eid from job j where j.eid=?";
+			  List<Job> jobs = jdbcTemplate.query(sql2, new Object[] { employee.getEid() }, new BeanPropertyRowMapper<Job>(Job.class));
+			  // 設置關聯
+              employee.setJobs(jobs);
+		      return employee;	  
+			 };
+		 3. if (offset >= 0) { sql += String.format(" limit %d offset %d ", LIMIT, offset); }
+		 4. List<Employee> employees = jdbcTemplate.query(sql, rm);
+         5. return employees		 
+-------------------------------------------------------------------------------
+Controller方法實作 : 
+ Employee : @Autowired private EmployeeDao employeeDao;
+  
+  - getPageCount() :  // 總頁數 = 全筆數 / limit 取整數
+	  1. int pageCount = (int)Math.ceil((double)employeeDao.getCount()/employeeDao.LIMIT); 
+      2. return pageCount;
+
+  - 首頁(index) / 路徑 : @GetMapping("/")
+      1. 需要 Model + @ModelAttribute Employee employee(表單綁定用)
+	  
+	  2. model.addAttribute 設定
+
+  - 分頁(page)  / 路徑 : @GetMapping("/page/{num}") 
+      1. 需要 Model + @ModelAttribute Employee employee(表單綁定用) + @PathVariable("num") int num (路徑參數) 
+	                + HttpSession httpSession(將分頁紀錄於 session 中) 
+	  
+	  2. 取得每頁開始筆數 : int offset = (num-1) * EmployeeDao.LIMIT; // page1 : index(0~4)(共5筆)
+ 	  
+	  3. 如果 num >=0 將 offset 紀錄於 httpSession 中
+	       httpSession.setAttribute("offset_emp", (num-1) * EmployeeDao.LIMIT); // offset 要 -1, 因為 offset 是從 0 開始
+		 反之刪除紀錄
+		   httpSession.removeAttribute("offset_emp");
+	  
+	  4. model.addAttribute 設定
+
+  - 單筆(get) / 路徑 : @GetMapping("/{eid}")
+      1. 需要 Model + @PathVariable("num") int num (路徑參數) 
+	                + HttpSession httpSession(將分頁紀錄於 session 中) 
+      2. model.addAttribute 設定 // 清單呈現以抓 session 中的 offset_emp 為主 	
+
+  - 新增(add) / 路徑 : @PostMapping("/")
+      1. 需要 Model + (@Valid Employee employee + BindingResult result )
+      
+      2. 如果 result 有錯 : model.addAttribute 設定 / return "session13/employee";
+      
+	  3. 新增並重導
+
+  - 更新(update) / 路徑 : @PutMapping("/")
+      1. 方法同上
+
+  - 刪除(delete)  
+      1. 需要 : Employee employee,Model model
+	  2. 使用 try catch 抓取錯誤
+	     try {
+			employeeDao.delete(employee.getEid());
+		 } catch (Exception e) {
+			model.addAttribute("_method","PUT");
+			model.addAttribute("employees" , employeeDao.query());
+			model.addAttribute("pageCount" , getPageCount());
+			model.addAttribute("message" , "以員工尚有工作無法刪除");
+			return "session13/employee";
+		 }
+		 return "redirect:./";
+
+-------------------------------------------------------------------------------
+前端 : 		 
+注意 : count 的 顯示 
+
+<!-- 小技巧：讓 jsp 可以支援所有 HTTP 方法 -->
+<%@ page isErrorPage="true" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+<%@ taglib prefix="spform" uri="http://www.springframework.org/tags/form" %>
+<!DOCTYPE html>
+<html>
+<head>
+	<link rel="stylesheet"
+		href="https://unpkg.com/purecss@2.0.6/build/pure-min.css">
+	<meta charset="UTF-8">
+	<title>Employee Form</title>
+	<style type="text/css">
+		.error {
+			color: #FF0000;
+		}
+	</style>
+	<script type="text/javascript">
+	 function changeMethodAndSubmit(methodValue){
+	    document.getElementById("_method").value = methodValue;
+		document.getElementById("employee").submit();
+	 }
+	</script>
+	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+	<script type="text/javascript">
+	google.charts.load('current', {'packages':['corechart']}); // 固定
+    google.charts.setOnLoadCallback(drawChart);                // 固定
+function drawChart() { 
+	salary(1);
+	jobs();
+}
+
+function salary(chartId) {
+	    	var data = google.visualization.arrayToDataTable([ // 固定
+		        ['ename', 'salary'],                           // key and Value
+		        <c:forEach var="emp" items="${ employees }">   // 拆解 employees 內容
+		        ['${ emp.ename }', ${emp.salary}],             // key 放入值
+		        </c:forEach>
+			]);
+		
+			var options = {
+				title: 'Salary'                                // 標題
+			};
+			
+			var chart = new google.visualization.BarChart(document.getElementById('piechart'));
+			switch(chartId) {
+        	case 2:
+        		chart = new google.visualization.PieChart(document.getElementById('piechart'));
+        		break;
+        	case 3:
+        		chart = new google.visualization.ColumnChart(document.getElementById('piechart'));
+        		break;
+        	case 4:
+        		chart = new google.visualization.LineChart(document.getElementById('piechart'));
+        		break;	
+        }
+        
+        chart.draw(data, options);
+}
+
+function jobs() {
+	    	var data = google.visualization.arrayToDataTable([   // 固定
+		        ['ename', 'job_count'],                          // key and Value
+		        <c:forEach var="emp" items="${ employees }">     // 拆解 employees 內容
+		        	// 判斷工作數量是否  > 0
+		        	<c:if test="${ fn:length(emp.jobs) > 0 }">
+		        		// 判斷第一筆工作的 jid 不可以是 null
+				        <c:if test="${ emp.jobs[0].jid != null }">
+				        	['${ emp.ename }', ${ fn:length(emp.jobs) }], // key 放入值 
+				        </c:if>
+				        <c:if test="${ emp.jobs[0].jid == null }"> 
+				        	['${ emp.ename }', 0],                        // key 放入值
+				        </c:if>	
+			        </c:if>
+		        </c:forEach>
+			]);
+		
+			var options = {
+				title: 'Jobs'
+			};
+		
+			var chart = new google.visualization.LineChart(document.getElementById('line_chart')); // 調整圖形
+			chart.draw(data, options); // 固定	    	
+}
+	</script>
+</head>
+<body style="padding: 15px;">
+
+	<table style="width: 100%">
+		<tr>
+			<!-- Employee Form -->
+			<td valign="top">
+				<spform:form  class="pure-form"
+				              method="post" 
+				              modelAttribute="employee"
+				              action="${ pageContext.request.contextPath}/mvc/jdbc/employee/">
+				<fieldset>
+				<legend>
+				 <b>Employee Form</b> &nbsp;|&nbsp;
+				 <a href="${ pageContext.request.contextPath}/mvc/jdbc/job/">Job Form</a>
+				 
+				</legend>             
+				<input type="hidden" id="_method" name="_method" value="${_method}"/>
+				編號 : <spform:input path="eid" readonly="true"/> <p/>
+				      <spform:errors path="eid" cssClass="error" /> <p/>
+				姓名 : <spform:input path="ename"/> <p/>
+				      <spform:errors path="ename" cssClass="error" /> <p/>
+				薪資 : <spform:input path="salary" type="number"/> <p/>
+				      <spform:errors path="salary" cssClass="error" /> <p/>
+				      <button type="submit" ${_method eq 'POST' ? '' : 'disabled' } 
+				              class="pure-button pure-button-primary">
+				              新增
+				      </button>
+				      <button type="submit" ${_method eq 'PUT' ? '' : 'disabled' } 
+				              class="pure-button pure-button-primary">
+				              修改
+				      </button>
+				      <button type="button" ${_method eq 'PUT' ? '' : 'disabled' } 
+				              onclick="changeMethodAndSubmit('DELETE')"
+				              class="pure-button pure-button-primary">
+				              刪除
+				      </button>
+				     <font color="red">${ message }</font>  
+				</fieldset>       
+				</spform:form>
+			</td>
+			<td valign="top">
+				<form class="pure-form">
+					<fieldset>
+						<legend>
+							Salary Chart |
+							<a href="#" onclick="salary(1)">bar</a> |
+							<a href="#" onclick="salary(2)">pie</a> |
+							<a href="#" onclick="salary(3)">column</a> |
+							<a href="#" onclick="salary(4)">line</a>
+						</legend>
+						<div id="piechart" style="width: 500px; height: 300px;"></div>
+					</fieldset>
+				</form>
+			</td>
+			<!-- Jobs Line Chart -->
+			<td valign="top">
+				<form class="pure-form">
+					<fieldset>
+						<legend>Jobs Line Chart</legend>
+						<div id="line_chart" style="width: 400px; height: 250px"></div>
+					</fieldset>
+				</form>
+			</td>
+		</tr>
+		<tr>
+			<!-- Employee List -->
+			<td valign="top" colspan="4">
+				 <form class="pure-form">
+				  <fieldset>
+				   <legend>Employee List || 
+				   <a href="${ pageContext.request.contextPath}/mvc/jdbc/employee/page/-1">全部查詢</a>
+				   <c:forEach end="${pageCount}" begin="1" var ="num">
+				     <a href="${ pageContext.request.contextPath}/mvc/jdbc/employee/page/${num}">${num}</a>
+				   </c:forEach> </legend>
+				   <table class="pure-table pure-table-bordered" style="width: 100%">
+				    <thead>
+				     <tr>
+				      <th>編號</th>
+				      <th>姓名</th>
+				      <th>薪資</th>
+				      <th>工作</th>
+				      <th>建立時間</th>
+				     </tr>
+				    </thead>
+				    <tbody>
+				     <c:forEach items="${employees}" var="emp">
+				     <tr>
+				      <td>
+				       <a href="${ pageContext.request.contextPath}/mvc/jdbc/employee/${emp.eid }">${emp.eid }</a>
+				      </td>
+				      <td>${emp.ename }</td>
+				      <td>${emp.salary }</td>
+				      <td>
+				       <c:forEach items="${emp.jobs}" var="job">
+				        ${job.jname} 
+				       </c:forEach>
+				      </td>
+				      <td>${emp.createtime}</td>				      
+				     </tr>
+				     </c:forEach>
+				    </tbody>
+				   </table>
+				  </fieldset>
+				 </form>
+			</td>
+		</tr>
+	</table>
+</body>
+</html>
