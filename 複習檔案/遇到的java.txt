@@ -10,6 +10,36 @@
 	Files.copy(file.toPath(), out); // (圖片來源端, 目的端)
 	out.close();
 
+*. 拋出不支援功能例外 : throw new UnsupportedOperationException();
+    範例 : 
+    
+	interface MyPhone{
+	// 功能
+	void dial(String number);
+	void camera();
+	void watch(); 
+    }
+    
+    // 復古電話
+    class OldPhone implements MyPhone{
+
+	@Override
+	public void dial(String number) {
+		 System.out.println("電話號碼" + number);
+	}
+
+	@Override
+	public void camera() {
+	     throw new UnsupportedOperationException("無拍照功能");
+	}
+
+	@Override
+	public void watch() {
+		 throw new UnsupportedOperationException("無觀看影片功能");
+	}
+	
+} 	
+
 	
 	
     
