@@ -1,0 +1,16 @@
+Java_Home 位置
+ C:\Program Files\Java
+ 
+安裝 :
+ 1.確認JDK安裝成功後，接著設定環境變數。
+   至「控制台>>系統及安全性>>系統」點選「進階系統設定」 
+ 
+ 2.於進階系統設定中，點選環境變數 -> 系統變數。
+ 
+ 3. 新增  JAVA_HOME 變數值 : C:\Program Files\Java\openlogic-openjdk-11.0.8+10-win-x64  // JDK位置
+ 4. 新增  path 再新增 %JAVA_HOME%\bin // 讓 path 找到你的 JAVA_HOME
+
+確認 : cmd -> java -version 
+
+
+http://140.118.5.29/2022fall/ct5707/Install%20Java%20Eclipse/index.html
