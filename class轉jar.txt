@@ -1,0 +1,4 @@
+1. 找到 class 檔案夾位置 : (舉例 : C:\Users\vic\Desktop\無聊時的練習(20220803-service in)\猜數字\猜數字\hw1.class)
+2. 創立 .txt 輸入 Main-Class: class 檔名稱 另存為 manifest.mf
+3. cmd 輸入 cd C:\Users\vic\Desktop\無聊時的練習(20220803-service in)\猜數字\猜數字\ 找到 class 檔位置
+4. cmd 輸入 jar cvfm 檔名稱.jar manifest.mf 檔名稱.class
