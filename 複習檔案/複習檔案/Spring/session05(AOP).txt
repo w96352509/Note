@@ -1,0 +1,87 @@
+Spring AOP (方面導向)
+ - 目的 : 將公用與私有邏輯分開
+ - 物件導向(垂直導向)
+ - 橫切關注點(Cross-cutting concern)
+ - AOP(一種開發方式) / AspectJ(將 AOP 套入 JAVA)
+ - Aspect(方面) / Advice(通知) / Joinpoint(連接點) / PointCut(切入點)
+ - Advice(通知) => @Before / @AfterReturning / @AfterThrowing / @After
+ 
+ - EL 語法 : 
+     1. "execution(* com.spring.core.session05.aop.*.*(..))"                  // *(任意方法) , (..) 任意型別
+	 2. "execution(* com.spring.core.session05.aop.*.add(Integer , Integer))" // *(任意權限) com
+ 
+ - Xml掃描 : <context:component-scan base-package="com.spring.core.session05" />
+     - 讓 Spring AOP 切面自動代理 : <aop:aspectj-autoproxy proxy-target-class="true" /> 
+ 
+ - 方法實作(使用 @ 配置) 
+     0. 將此類給 Spring 管理(@Component) / 宣告為切面(@Aspect) / 順序(@Order(1))
+	 
+	 1. 設定 @PointCut :
+	      @PointCut(value="EL 語法") public void 名稱();
+	 
+	 2. 設定通知切入點並用 Joinpoint 取得內容 :
+	      
+		  //前置通知
+		  @Before(value="PointCut的方法名稱") public void before(Joinpoint joinPoint){
+		  
+		    joinPoint.getSignature().getName(); // 取得方法簽章名稱
+			joinPoint.getArgs();                // 方法參數
+		  
+		  }
+		  
+		  // 返回通知
+		  @AfterReturning(value="PointCut的方法名稱" , returning="返回名稱") 
+		  public void before(Joinpoint joinPoint , Object 對應返回名稱){}
+		  
+		  // 異常通知
+		  @AfterThrowing(value="PointCut的方法名稱" , throwing="返回名稱")
+		  public void before(Joinpoint joinPoint , Throwable 對應返回名稱){}
+		  
+		  // 後置通知
+		  @After(value="PointCut的方法名稱") public void after(Joinpoint joinPoint){}
+
+ 
+ - 環繞通知(使用 @ 配置)
+     
+     1. 設定 @Around(value="PointCut的方法名稱") public Object method(Joinpoint joinPoint){
+     2. 使用 try(前置通知 , 返回通知) catch(異常通知) finally(後置通知)
+     }
+
+ - 橫面轉型 : 
+     1. 宣告為切面(@Aspect)
+     2. @DeclareParents(value="原介面路徑+" , defaultImpl = 類.class )	 // + 此介面下任意方法 , defaultImpl 預設實作方法
+	    public 要轉的介面 
+		
+
+ - 總整 : 
+    1. 類       -> @Component , @Aspect , @Order
+	2. 切入方法 -> @Pointcut(value = "execution()") 名稱
+    3. 各種通知 -> @before(前置) , @AfterReturning(後置) , @AfterThrowing(返回) , @After(異常) (value=" @PointCut 名稱 ")
+     3-1. 方法參數(Joinpoint joinPoint);
+ 
+ - 總整環繞 :
+    1. 方法 -> @Around(value=" @PointCut 名稱 ") 
+     1-2. 方法參數(ProceedingJoinPoint joinPoint);
+    
+	try{
+	 1. 前置
+	 2. 執行業務邏輯 (重要!! 一定要加入) Object result = joinPoint.proceed();
+	 3. 返回通知
+	}catch{
+	 4. 異常通知
+	}finally{
+	 5. 後置通知
+	}	 
+
+ - 範例整理
+     1. interface       : Performance -> void perform(); // 目的主要練習 AOP 的對像
+	                      Singer -> void sing();         // 練習橫向轉型
+     
+	 2. @Aspect         : Audience	                     // 切面程式
+	 
+	 3. @DeclareParents : Introducter                    // 橫向轉型的媒介
+	 
+	 4. @Configuration  : AOPConfig                      // Java 配置
+	     -> @Bean 配置  : 實作目標(Dancer) , 切面程式 , 橫向轉型的媒介 
+	 
+	 5. class : BackSinger / Dancer 

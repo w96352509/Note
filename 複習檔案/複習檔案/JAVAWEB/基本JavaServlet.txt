@@ -1,0 +1,371 @@
+JavaServlet :
+ 1. Java 為了擴充伺服器 -> Servlet
+ 2. Servlet - Java.class
+
+編碼設定
+ req.setCharacterEncoding("UTF-8");
+ resp.setContentType("text/html;charset=UTF-8");
+ resp.setCharacterEncoding("UTF-8");
+
+web.xml 配置路徑 :
+ 1. <Servlet> <servlet-name> & <servlet-class> </Servlet> // <servlet-class> -> scr/main/java 
+ 2. <Servlet-mapping> <servlet-name> & <url-pattern> </Servlet-mapping>
+
+送出請求 :
+ 1. 使用 Get  情況 : 小型文件(字元 240下)
+ 2. 使用 Post 情況 : 大量文件
+
+// (HttpServlet extends GenericServlet) , 配合前端 form 表單 action 導入 servlet
+處理請求 : 
+ 1. extends GenericServlet -> Service()         // 透過 service() 處理 client request	
+ 2. extends HttpServlet    -> doGet , doPost... // Service 會自動根據分派到 doXXX(); 
+
+接收請求
+ 1. req.getParameter(""); // 以前端的 name 
+
+單多筆接收
+ 1. Map<String, String[]> map = req.getParameterMap(); 
+    String[] = map.get("name"); 
+ 
+ 2. String[] = req.getParameterValues("name");
+
+取得接收路徑尾
+ 1. req.getPathInfo();
+
+取得 Header 參數
+ 1. String = resp.getHeader(""); -> 內容過濾 if(headerValue.contains(""))
+
+Enumeration 類實作 :
+ // 取得前端參數名稱
+ Enumeration<String> names = req.getParameterNames();
+  while(names.hasMoreElements()) {
+	out.println(names.nextElement() + " ");
+  }
+
+ // 取得 Header 內容
+ Enumeration<String> headerNames = req.getHeaderNames();
+   while(headerNames.hasMoreElements()){
+    String headerName = headerNames.nextElement(); // 標頭名稱
+	String headerValue = req.getHeader(headerName); // 標頭內容
+	out.println(headerName + ":" + headerValue);
+   } 
+		
+設定錯誤驗證
+ 1. resp.senderror(500,"message");
+
+設定圖片大小(form 表單需 enctype="multipart/form-data" ) : 
+ @MultipartConfig
+ fileSizeThreshold = 1024 * 1024 * 2, // 記憶體上限
+ maxFileSize = 1024 * 1024 * 10,      // 單一檔案最大
+ maxRequestSize = 1024 * 1024 * 50    // 總檔案上限
+
+圖片讀取
+ File file = new File();
+ ServletOutputStream out = resp.getOutputStream();
+ Files.copy(file.toPath(), out); // (圖片來源端, 目的端)
+ out.close();
+
+
+
+------------------------------------------------------------------------------------------------
+範例統整 : 
+ GenericServlet  
+  1. TodayServlet     -> 練習 GenericServlet 基本構築 and web.xml 配置
+  2. LuckyServlet     -> 練習 GenericServlet 基本構築 and web.xml 配置
+  3. TimeStampServlet -> 練習 GenericServlet 基本構築 and @       配置
+ 
+ HttpServlet
+  1. area_form.html + AreaServlet -> 練習 HttpServlet and @ 配置 + 接收請求
+  2. bmi_form.html  + bmiServlet  -> 練習 HttpServlet and @ 配置 + 接收請求(多種方式)
+  3. calcArea.html  + AreaCalcServlet + CalcAreaService -> 練習 HttpServlet and @配置 + 接收請求(多種方式) 
+  4. employee.html  + EmployeeServlet + EmployeeService -> 練習 HttpServlet and @配置 + 接收請求 + req(java8) + sendError
+  5. employee.html  + BabyQRServlet                     -> 練習將資料夾圖片顯示於網頁
+  6.                  HeaderServlet                     -> 取得 Header 練習
+  7.                  TodayHeaderServlet                -> 取得 Header 練習
+  8. message_form     + messageServlet + messageService -> 練習 HttpServlet and @配置 + LineAPI 
+  9. upload_form.html + uploadServlet                   -> 練習上傳與串流
+------------------------------------------------------------------------------------------------
+calcArea.html  + AreaCalcServlet + CalcAreaService 練習多組接收後端處理
+回傳需求 : 結果 + 方法 + 參數
+
+ 1. html : 
+     <form class="pure-form" method="post" action="/JavaWeb-20220803/servlet/httpServlet/AreaCalcServlet">
+      <!-- 共3組 -->
+	  <select name="type">
+          <option value="1" selected>圓面積</option>
+          <option value="2">球體積</option>
+      </select>
+          <input type="number" placeholder="請輸入半徑" name="r" />
+	 </form> 
+
+ 2. AreaCalcServlet :
+      1. 使用 req.getParameterValues("") // 接收多組 type , r 提供給 service 方法處理
+      2. 使用 CalcAreaService.getAreaResults(String[] types, String[] rs)
+	  3. 將 CalcAreaService.getAreaResults 的回傳值 PrintWrite 出去
+
+ 3. CalcAreaService
+      1. 已知回傳需求 : 結果 + 方法 + 參數 當成 Map 處理因有多組將 List 包裝  
+      
+	  2. 處理 Servlet 過來的資料(List<Map> getAreaResults(String[] types, String[] rs))
+	       2-1. 建立 List<Map> list = new ArrayList<>(); // 蒐集回傳結果
+		   2-2. 使用 for 回圈輪巡資料
+		          2-2-3. 如果接收到的 rs = "" , rs=null 將 rs 補 0
+		          2-2-4. 將回圈資料轉型(int)
+				  2-2-5. 取得方法名稱實作(String)
+				  2-2-6. 取得面積方法實作(double)
+				  2-2-7. 建立 map 紀錄每次輪巡的結果("r", r) , ("result", result) , ("name", name)
+				  2-2-8. 將 map add 到 list
+		   2-3. return list
+     
+	 3. 取得方法名稱實作 getNameByType(int type)
+	      3-1. 建立 static Map<Integer, String> types // 用於放入對應前端格式(1,圓面積)/(2,球體積)
+		  3-2. 運用 types 取得方法名稱 : types.get(key(type));
+	     
+     4. 取得面積方法實作 getAreaResult(int type, int r)
+          4-1. 預設面積 = 0;
+          4-2. 使用	type 取對應方法 switch(type) :
+                 4-2-1. case 1: // 圓面積  Math.pow(r, 2) * Math.PI;
+                        case 2: // 球體積  Math.pow(r, 3) * Math.PI * 4/3;
+                 4-2-2. default : area = -1;
+          4-3 回傳 area;				 
+------------------------------------------------------------------------------------------------		  		  
+message_form   + messageServlet + messageService + message_result.jsp   -> 練習 HttpServlet and @配置 + LineAPI 
+https://developers.line.biz/en/docs/messaging-api/sticker-list/#sticker-definitions 貼圖網址
+https://notify-bot.line.me/doc/en/ // 規格
+回傳需求     : 貼圖(片)呈現 in web and line
+Line貼圖組合 : stickerPackageId + stickerId
+注意重點 : html    -> js 取得 webImageUrl 要清除空白
+           servlet -> 接收回傳型態與重導
+		   service -> 方法只有接收 data 時設定的參數不同 / 發送與回應要使用串流
+
+ 1. message_form : 
+     1. script :
+         1. 預覽貼圖  previewSticker()  
+             1. 得到貼圖ID的值
+			 2. 加上 url : 
+			     var imgUrl = "https://stickershop.line-scdn.net/stickershop/v1/sticker/" + stickerId + "/android/sticker.png";
+			     // 此網址是圖片原始碼中的連結對圖片右鍵檢查
+			 
+			 3. 加上預覽 :
+			    document.getElementById('previewStickerArea').innerHTML = "<img valign='middle' width='100' src='" + imgUrl + "'>";
+			 
+         2. 預覽Web圖 previewWebImage()
+		     
+			 1. 得到網圖ID的值
+			 2. 將空白去除 trim();
+			 3. 如果網圖ID的值 != ''
+			     3-1. 如果網圖ID的值找不的到 'http://' >=0 or 'https://' >=0 自動在網址前面加上 https://
+				      if(!(webImageUrl.indexOf('http://') >= 0 || webImageUrl.indexOf('https://') >= 0)) {}
+				 
+				 3-2 得到網圖ID的值 = 'https://' + 網圖ID的值
+				 3-3 重新抓取網圖ID的值 
+  
+             4. 加上預覽 :
+			    document.getElementById('previewWebImageArea').innerHTML = "<img src='" + webImageUrl + "'>";
+  
+         3. 表單傳送前的驗證 beforeSubmit()
+		     
+			 1. 檢查訊息內容是否有資料? : 得到內容 ID 值
+			 2. 如果為空 : 警告('請輸入訊息內容 !') / document.getElementById('content').focus(); / return false
+			 3. 若 webImageUrl 欄位有資料且前面沒有加上http:// 或 https://, 則統一補上 https://
+			 4. 回傳 ture
+		 
+	 
+	 2. html(格式 <form><fieldset><legend></legend></fieldset></form>)
+         1. <form class="pure-form" method="post" onsubmit="return beforeSubmit()" action="/JavaWeb-20220803/servlet/message">
+         2. type:textarea / name , id = content
+         3. type:number   / name , id = stickerPackageId / value ="貼圖群組號碼" // 6325 
+         4. type:number   / name , id = stickerId        / value ="貼圖號碼"     // 10979907  
+		    onchange="previewSticker()" style="width: 120px"                     // onchange : 觸發 js 改變內容值
+         
+		 5. type:button   / onclick="previewSticker()" class="pure-button pure-button-primary"
+         6. <span id="previewStickerArea"></span> 預覽貼圖位置
+         7. type:text     / name , id = webImageUrl value=""		 
+         8. type:button   / onclick="previewWebImage()" class="pure-button pure-button-primary"
+		 9. <div id="previewWebImageArea"></div> 預覽網圖位置
+		10. type:submit  class="pure-button pure-button-primary"
+
+ 2. MessageService :
+     1. 取得 LineNotify 發行權杖(String token) : 2RV1yVXIa5jczTwq4bZMIO4yNDcHj1YvC15ue38tLQf 
+	 2. 準備方法 : int  pushMessageAndWebImage / 
+	                    pushMessageAndSticker(String content, String stickerPackageId, String stickerId)(更改第二步驟的對應名稱) / 
+						pushMessage(String content)(更改第二步驟只需 message)
+	 3. 方法實作 :
+	     1. pushMessageAndWebImage(String content, String webImageUrl)
+             
+			 1. 取得服務            url      : https://notify-api.line.me/api/notify
+			    並設定預設網路狀態  httpcode : 0;
+             
+			 2. 將要發送並編碼 -> byte[] postData =  
+			    ("message=" + content + "&imageThumbnail=" + webImageUrl + "&imageFullsize=" + webImageUrl).getBytes("UTF-8");
+                // 名稱按照 notify 規格
+				// imageThumbnail + imageFullsize 網路圖片
+				// stickerPackageId + stickerId   貼圖
+             
+			 3. 建立 url 物件 new URL(url);
+
+             4. 開啟 HttpURLConnection(聯繫) (HttpURLConnection)url.openConnection(); 
+                  4-1. 開啟 URL 連線模式 : setDoOutput(true)
+                  4-2. 設定回傳方法      : setRequestMethod("POST")
+                  4-3. 設定 Header 內容  : setRequestProperty("Authorization", "Bearer " + token);
+                                         : setRequestProperty("Content-Type", "application/x-www-form-urlencoded"); //非必要
+				  4-4. 關閉快取          : setUseCaches(false);	
+             
+             5. 發送並回應(建立串流帶入資料串流) :
+ 			      5-1. DataOutputStream oos = new DataOutputStream(conn.getOutputStream())
+				  5-2. 將資料印出 write(postData) , 刷新 flush();
+				  5-3  取得目前聯繫狀態 != HttpURLConnection.HTTP_CREATED 將 httpcode = 取得目前聯繫狀態
+			 
+			 6. 回傳 httpcode
+
+  3. messageServlet :
+      1. 設定接收回傳型態 :
+	       req.setCharacterEncoding("utf-8");
+		   resp.setCharacterEncoding("utf-8");
+		   resp.setContentType("text/html;charset=utf-8");
+      
+	  2. 接收前端資訊 : 
+           String content = req.getParameter("content");
+		   String stickerPackageId = req.getParameter("stickerPackageId");
+		   String stickerId = req.getParameter("stickerId");
+		   String webImageUrl = req.getParameter("webImageUrl");
+
+      3. 建立推播服務 :
+	       MessageService messageService = new MessageService(); // 取得 Service
+	
+	  4. 取得 messageService 進行訊息推播並回傳 httpCode 狀態值 : 
+	  
+	  5. 最後將必要訊息收集並重導給 jsp 去呈現
+	       RequestDispatcher rd = req.getRequestDispatcher("/WEB-INF/jsp/message_result.jsp");
+		   req.setAttribute("content", content);
+		   req.setAttribute("stickerId", stickerId);
+		   req.setAttribute("webImageUrl", webImageUrl);
+		   req.setAttribute("httpCode", httpCode);
+		   rd.forward(req, resp);
+
+ 4. message_result.jsp		   
+     <%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+     <!DOCTYPE html>
+     <html>
+     <head>
+     <link rel="stylesheet"
+	   href="https://unpkg.com/purecss@2.1.0/build/pure-min.css">
+     <meta charset="UTF-8">
+     <title>Message result</title>
+	 </head>
+		<body style="padding: 20px">
+			<form class="pure-form" action="/JavaWeb-20220418/html/message_form.html">
+				<fieldset>
+					<legend>Message result:</legend>
+						訊息內容: ${ content }<p />
+						貼圖: <img src="https://stickershop.line-scdn.net/stickershop/v1/sticker/${ stickerId }/android/sticker.png"><p />
+						網路圖片: <img src="${ webImageUrl }"><p />
+						回應碼(Http Code): ${ httpCode }<p />
+						<button type="submit" class="pure-button pure-button-primary">
+							返回
+						</button>
+				</fieldset>
+			</form>
+		</body>
+	</html>
+
+------------------------------------------------------------------------------------------------
+upload 範本練習
+ pom.xml 加上 org.apache.commons.io 
+ 重點 : HTML 編碼格式 : enctype="multipart/form-data" , 因圖檔較大使用 post 
+        Servlet -> @MultipartConfig
+ 
+ 範本 : upload_form + uploadServlet
+ 
+ 
+ HTML :
+  // 純文字檔路徑 : /file , 圖檔 : /image
+  // 純文字檔 
+  1. <form  class="pure-form" 
+            enctype="multipart/form-data" 
+			method="post" 
+			action="/JavaWeb-20220803/servlet/upload/file" >
+  	 <fieldset>
+      <legend>Upload Form</legend>
+	  <input type="text" name="cname" placeholder="文件名稱" /> <p />
+	  <input type="file" name="upload_file" class="pure-button" />    <p />
+	  <button type="submit" class="pure-button pure-button-primary"> 上傳 </button>
+     </fieldset>
+     </form>
+  
+  // 圖檔	 
+  2. <form  class="pure-form" 
+            enctype="multipart/form-data" 
+			method="post" 
+			action="/JavaWeb-20220803/servlet/upload/image" >
+  	 <fieldset>
+      <legend>Upload Form</legend>
+	  <input type="text" name="cname" placeholder="圖片名稱" /> <p />
+	  <input type="file" name="upload_file" class="pure-button" />    <p />
+	  <button type="submit" class="pure-button pure-button-primary"> 上傳 </button>
+     </fieldset>
+     </form>
+
+ UploadServlet :
+  1. 路徑 : servlet/upload/*
+  2. 接收 : post
+  3. 方法 : doPost / uploadFile / uploadImage
+      
+	  1. doPost :
+	       - 取得接收路徑尾 : String pathInfo = req.getPathInfo();
+		   - 將得到 pathInfo 透過 switch 判斷要執行的方法
+		      switch (pathInfo) {
+                case "/file":
+                  uploadFile(req, resp);
+                  break;
+                case "/image":
+                  uploadImage(req, resp);
+                  break;
+                }
+	   
+      2. uploadFile : 處理名稱 cname + 純文字檔
+           - 上傳表單資料通常用 getParts() 取得 part 物件 , 
+		     req.getParts()                                  // 取得 part 物件
+			 .stream()                                       // 轉串流
+			 .filter(part -> part.getName().equals("cname")) // 取得 cname or upload_file(文字) 內容
+			 .forEach(part -> {                              // 使用 forEach 取得各資料配合 Lambda 表達式處理
+			                                                
+						// 將得到檔案轉 IO 流 , 並透過 IOUtils 工具設定編碼和處理 IO
+			            String cname = IOUtils.toString(part.getInputStream(), StandardCharsets.UTF_8.name()); 
+					  });
+     
+     3. uploadImage : 處理名稱 cname + 圖檔	
+          - cname 同上
+          - 上傳表單資料通常用 getParts() 取得 part 物件 , 
+		     req.getParts()                                        // 取得 part 物件
+			 .stream()                                             // 轉串流
+			 .filter(part -> part.getName().equals("upload_file")) // 取得 upload_file(圖檔) 內容
+			 .forEach(part -> {                                    // 使用 forEach 取得各資料配合 Lambda 表達式處理
+			           
+					   // 製作 base64 圖片碼 
+				       // 步驟將 InputStream -> byte[] --> base64 字串                                    
+					   InputStream is = part.getInputStream(); // 取得 IO 
+					   byte[] bytes = IOUtils.toByteArray(is); // 透過 IOUtils 工具轉 byte[]
+                       String base64 = Base64.getEncoder().encodeToString(bytes); // 轉 64 編碼					   
+					   
+					   // 建立 HTML src 標籤
+				       String imageHtml = "<img src='data:image/png;base64, %s'>";
+					   out.print(String.format(imageHtml, base64));
+					   
+					   // 設定存檔資料夾
+					   String path ="C:\\upload" ;
+					   
+					   // 確認資料夾是否存在
+					   File folder = new File(path);
+                        if(!folder.exists()) {
+                            folder.mkdir(); // 建立資料夾
+                        }
+						
+					   // 取得上傳檔案名稱
+					   String fname = part.getSubmittedFileName();
+						
+					   // 存檔
+					   part.write(path + \\ + fname);
+					   
+					  }); 		  

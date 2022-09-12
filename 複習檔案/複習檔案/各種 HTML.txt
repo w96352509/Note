@@ -1,0 +1,31 @@
+Form :
+ 1. WEB
+    
+	圖片編碼 : enctype="multipart/form-data"
+
+---------------------------------------------------------------------------	
+ 2. Spring 綁定
+    <!-- 小技巧：讓 jsp 可以支援所有 HTTP 方法 -->
+    <%@ page isErrorPage="true" %>
+    
+	<spform:form  class="pure-form"
+				  method="post" 
+				  modelAttribute="根據後端得  @ModelAttribute"
+				  action="${ pageContext.request.contextPath}/mvc/...."> // 也可直接貼路徑
+    
+	// path = name & id 取得綁定物件的 name & id 
+	<spform:input path="eid" readonly="true"/> <p/>
+    
+	// 錯誤驗證	
+    <spform:errors path="eid" cssClass="error" /> <p/>	
+ 
+    // 切換 method 技巧配合 JS
+	 <button type="button" class="pure-button pure-button-primary" ${ _method eq 'PUT'?'':'disabled' }   onclick="changeMethodAndSubmit('DELETE');">刪除</button>
+	 
+	 function changeMethodAndSubmit(methodValue) {
+			document.getElementById("_method").value = methodValue;
+			document.getElementById("job").submit();
+		}
+	
+--------------------------------------------------------------------------- 
+ 3. thymeleaf

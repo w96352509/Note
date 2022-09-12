@@ -1,0 +1,108 @@
+基本圖形(共同寫法) : 
+ 1. 固定步驟 :
+      <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+	  <script type="text/javascript">
+	  google.charts.load('current', {'packages':['corechart']}); // 固定
+      google.charts.setOnLoadCallback(drawChart);                // 固定
+ 
+      function drawChart() { 
+	    salary(1); // 繪圖方法
+	    jobs();    // 繪圖方法 
+       }
+
+ 2. 框架 :
+      function salary(chartId) {
+	    	var data = google.visualization.arrayToDataTable([ // 固定
+		        ['ename', 'salary'],                           // key and Value
+		        <c:forEach var="emp" items="${ employees }">   // 拆解 employees 內容
+		        ['${ emp.ename }', ${emp.salary}],             // key 放入值
+		        </c:forEach>
+			]);
+		
+			var options = {
+				title: 'Salary'                                // 標題
+			};
+			
+			var chart = new google.visualization.BarChart(document.getElementById('piechart'));
+			switch(chartId) {
+        	case 2:
+        		chart = new google.visualization.PieChart(document.getElementById('piechart'));
+        		break;
+        	case 3:
+        		chart = new google.visualization.ColumnChart(document.getElementById('piechart'));
+        		break;
+        	case 4:
+        		chart = new google.visualization.LineChart(document.getElementById('piechart'));
+        		break;	
+        }
+        
+        chart.draw(data, options);
+    } 
+
+ 3. HTML
+     <td valign="top">
+				<form class="pure-form">
+					<fieldset>
+						<legend>
+							Salary Chart |
+							<a href="#" onclick="salary(1)">bar</a> |
+							<a href="#" onclick="salary(2)">pie</a> |
+							<a href="#" onclick="salary(3)">column</a> |
+							<a href="#" onclick="salary(4)">line</a>
+						</legend>
+						<div id="piechart" style="width: 500px; height: 300px;"></div>
+					</fieldset>
+				</form>
+			</td>
+--------------------------------------------------------------------------------------------
+基本圖形(基本寫法): 
+  1. 固定步驟 :
+      <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+	  <script type="text/javascript">
+	  google.charts.load('current', {'packages':['corechart']}); // 固定
+      google.charts.setOnLoadCallback(drawChart);                // 固定
+ 
+      function drawChart() { 
+	    salary(1); // 繪圖方法
+	    jobs();    // 繪圖方法 
+       }
+  
+  2. 框架 :
+       function salary() {
+	    	var data = google.visualization.arrayToDataTable([ // 固定
+		        ['ename', 'salary'],                           // key and Value
+		        <c:forEach var="emp" items="${ employees }">   // 拆解 employees 內容
+		        ['${ emp.ename }', ${emp.salary}],             // key 放入值
+		        </c:forEach>
+			]);
+		
+			var options = {
+				title: 'Salary'                                // 標題
+			};
+			
+			// 長條圖(縱)
+			var columnChart = new google.visualization.ColumnChart(document.getElementById('column_chart'));
+			columnChart.draw(data, options);
+			// 圓餅圖
+			var pieChart = new google.visualization.PieChart(document.getElementById('pie_chart'));
+			pieChart.draw(data, options);
+	    }  
+  3. HTML :
+      <!-- Salary Column Chart -->
+			<td valign="top">
+				<form class="pure-form">
+					<fieldset>
+						<legend>Salary Column Chart</legend>
+						<div id="column_chart" style="width: 400px; height: 250px"></div>
+					</fieldset>
+				</form>
+			</td>
+			<!-- Salary Pie Chart -->
+			<td valign="top">
+				<form class="pure-form">
+					<fieldset>
+						<legend>Salary Pie Chart</legend>
+						<div id="pie_chart" style="width: 400px; height: 250px"></div>
+					</fieldset>
+				</form>
+			</td>  

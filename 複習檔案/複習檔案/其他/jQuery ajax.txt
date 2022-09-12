@@ -1,0 +1,99 @@
+jQuery = 跨瀏覽器的JavaScript函式庫
+
+util.js 組合範例 : <script th:src="@{/js/util.js}"></script> 使用 serializeObject , format
+
+使用 jQuery 掛載
+ <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+
+主旨 : jQuery and jQuery 的 $.ajax()
+
+目錄 : jQuery / 總範例(ajax + util.js ) / 取得表單資料範例 / 列印表單資料範例(ajax + util.js )
+
+jQuery :
+ 1. 載入網頁時動作 : 
+      - $(document).ready(function(){};)
+ 
+ 2. 指定 HTML 物件 ID  :
+      - $("#ID名稱") 
+
+ 3. 指定 HTML 物件 ID 動作 :
+      - button : $("#ID名稱").on('click',function(){};) 
+      
+	  - Table  : $("#table名稱").on('click',"tr",function(){};) // 點擊表單取得 tr 內的資訊	  
+          - 取得 table 詳細資訊 : $(this).find("td").eq(0).text().trim();
+      
+	  
+ 4. 使用 url :
+      - $.get(url,function(data , status){}) 
+	  
+ 5. 賦予指定 HTML 表單欄位內容 :
+      - $("#myform").find("#欄位id").val();
+	  - $("#myform").find("#欄位id").prop('checked',); // Boolean 
+ 
+ 6. 改變按鈕狀態 :
+     - $("#按鈕ID").attr('disabled' , false);          // false 開
+ 
+ 7. 迭代 :
+     - $.each(datas , function(index , value){})
+
+-----------------------------------------------------------------------------------------------------------
+
+Ajax :
+ 1. $.ajax 格式 :
+      - ajax({
+    	  url  : ,  
+	      type : ,
+	      contentType : application/json;charset=utf-8 ,
+		  data: ,
+		  cache: boolean ,
+		  success : function(resp){
+		  
+		            }
+	         })
+ 
+----------------------------------------------------------------------------------------------------------- 
+ajax + util.js 組合範例 : //  <script th:src="@{/js/util.js}"></script> 使用 serializeObject , format
+      - 範例 : 
+	      $("#add").on('click' , function(){
+	        var jsonobj = $("#myfrom").serializeObject();  // 將表單資料序列化(util.js)
+            var jsonStr = JSON.stringify(jsonobj);         // 將序列化物件改 JSON (JS)
+            $.ajax({
+			   url : ,                                     // Controller 的 RequestMap("")
+			   type: ,                                     // Controller 對應的 method
+			   contentType: application/json;charset=utf-8 ,                             
+			   data: jsonStr,
+			   cache: false,
+			   success : function(){
+			   
+			   }
+			})			
+	      });
+
+列印表單資料範例(util.js 的 String.format) : 
+      - 範例 :
+	      $.get("全搜尋url" , function(datas,status){
+		      
+			  // 每次抓先清除 table 的內容部分
+			  $("#mytable tbody > tr ").remove();
+			  
+			  // 將 HTML 格式加入 table 中
+			  $.each(datas , function(i , item){
+                 var html = <tr><td>{0}</td></tr> ;               
+				 $("#myTable").append(String.format(html, item.id, item.name, item.tx));
+			  };)
+			})
+		  
+		  
+
+取得表單資料範例 :
+      - 範例 :
+          $.("#mytable").on('click','tr',function(){
+		      var id  = $(this).find('td').eq(0).text().trim();
+			  var url = "取得單筆方法的 url";
+			  $.get(url , function(data , status){
+			    
+				// 將得到的 data 配置於表單(myfrom)
+				$("#myfrom").find("#對應ID").val(data.對應內容)
+				$("#myform").find("#tx").prop('checked', data.tx);
+			  })
+		    })	  

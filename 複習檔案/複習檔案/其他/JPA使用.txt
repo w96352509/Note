@@ -1,0 +1,4 @@
+JPA : 
+      @Modifying         (sql語法可下搜尋以外的指令) // 更新回傳 void
+	  @Transactional     (開啟交易功能)
+	  @Query("")         (下達 SQL 語法) + nativeQuery = true (透過原生 sql 給資料庫)

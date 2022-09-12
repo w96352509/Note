@@ -1,0 +1,80 @@
+Java 物件導向設計原則 SOLID
+
+ 1. Java 物件導向原則 
+     問題描述
+	 解決方法
+	 維護思維
+	 
+ 2. 物件導向 5 + 2 原則
+     單一職責原則(Single responsibility principle, SRP) 
+	 開放封閉原則(Open-Close principle,            OCP)
+	 里氏替換原則(Liskov substitution principle,   LSP)  // 好麻煩
+     接口(介面)隔離原則(Interface segregation principle, ISP)
+     依賴反轉原則(Dependency inversion principle,  DIP)	
+     最少知識原則
+	 合成聚合
+ 
+ 3. 
+    依賴反轉原則(Dependency inversion principle,  DIP) // 範例 session0828.dip.*;
+	 - 高層不應該依賴底繩模組應該依賴抽象模組
+	 - 抽象不應該依賴細節應該依賴抽象
+    
+    開放封閉原則(Open-Close principle,            OCP) // 範例 session0828.dip.*; & session0828.ocp
+	 - 當需求有異動時，要如何在不變動現在正常運行的程式碼，藉由繼承、相依性注入等方式，增加新的程式碼，以實作新的需求
+     - 假若為了新需求，去修改了原本的程式中的某一個函數，可能會造成其他呼叫使用該函數的的功能，出現非預期的錯誤
+	
+    接口(介面)隔離原則(Interface segregation principle, ISP)  // 範例 session0828.dip.*;
+     - 針對不同需求的用戶，開放其對應需求的介面，提拱使用。可避免不相關的需求介面異動，造成被強迫一同面對異動的情況	
+	 
+	單一職責原則(Single responsibility principle, SRP) 
+     - 介面只放一種方法	
+	 - 設計理念 : 方法先用 interface 規劃後 , 再用 interface 組合
+	    interface A01 / B02 / C03 -> interface 組合 A01 , B02 -> class implements 組合  // 因 Java 介面可以多重繼承
+	
+    里氏替換原則 :
+     - 子類必須實現父類的抽象方法，但不得重寫（覆蓋）父類的非抽象（已實現）方法。
+     - 子類中可以增加自己特有的方法。
+     - 當子類覆蓋或實現父類的方法時，方法的前置條件（即方法的形參）要比父類方法的輸入參數更寬鬆。 // Overloading
+     - 當子類的方法實現父類的抽象方法時，方法的後置條件（即方法的返回值）要比父類更嚴格           // 
+	 
+	合成聚合 : 
+     - 不要使用繼承等
+     - 使用 new 取得方法
+	 EX : class XX{
+	        new XXX();
+	      }
+
+    最少知識原則 :	
+     - 不要讓外界的類獲得其他類重要的資訊
+     - 重要的資訊在自己類完成
+
+範本 :
+ 1. dip : session0828.dip.sol // dip + ISP + ocp
+     說明 : 細部方法實作 -> interface (抽象) 
+            實體呼叫     -> interface (抽象)	 
+
+ 2. ocp : session0828.ocp // ocp
+     說明 : 類似 dip
+
+ 3. ISP : session0828.srp.sol // ISP
+     說明 : 方法先用 interface 規劃後 , 再用 interface 組合 , class 在統一實作 
+	        interface 功能1 / 功能2 / 功能3 -> 
+			interface collect 功能1 / 功能2 -> 
+			class implements collect  // 因 Java 介面可以多重繼承	
+			
+ 4. LSP : session0828.lsp // LSP
+     說明 : 主要用途
+             1. 子類必須實現父類的抽象方法，但不得重寫（覆蓋）父類的非抽象（已實現）方法。
+             2. 當子類覆蓋或實現父類的方法時，方法的前置條件（即方法的形參）要比父類方法的輸入參數更寬鬆。 // Overloading
+
+ 5. LKP : session0828.lkp.sol // LKP 
+     說明 : 
+      1. 類別 : (Wallent + Customer ) + PaperBoy() // 用途 PaperBoy 要負責收 Customer 的款
+      2. 正常撰寫會導致 PaperBoy 可以得到 Customer 太多的資訊導致問題發生
+      3. 所以要把重要的資訊方法在自己類部完成
+
+   before : PaperBoy -> collectMoney() -> Wallet wallet = customer.getWallet();(X)
+            Customer -> 建構式 + get/set
+   
+   LKP    : PaperBoy -> collectMoney() -> customer.pay(int payMoney);
+            Customer -> 建構式 + pay(int payMoney); // 用於扣款 get/set 只提供自己使用    

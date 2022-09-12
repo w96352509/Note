@@ -1,0 +1,39 @@
+CREATE DATABASE psi_2022 CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+
+搜尋 : Select * From table名稱
+更新 : UPDATE 表單名稱 SET 欄位=? WHERE id=? // jpa 可透過 @Param("欄位") type 名稱 賦予 ? 值
+條件 : Where or 配合 join 是 on
+總和 : sum() , count()
+歸類 : group by 欄位名稱
+
+
+排序類 :
+  ROW_NUMBER() : 會將查詢出來的每一列資料加上一個序號(從1開始累加)，依次排序且不會重複
+   - 使用ROW_NUMBER()時必須要用OVER子句選擇對某一列進行排序才能生成序號
+   - 在做分頁功能時，通常都會使用上它
+   - 使用方法: 
+      1. Select ROW_NUMBER() OVER (ORDER BY [欄位名稱] (ASC or DESC) as [ROW_NUMBER的欄位名稱] ,* from [資料表名稱]
+	  2. SELECT ROW_NUMBER() OVER() AS id , 等欄位 form 表單
+
+範例(db: emp , job ) :
+  // 每一個有工作指派的員工之工作列表
+  1. 搜尋範例 : "SELECT * From emp e , job j where e.eid = j.eid order by e.ename";	  
+  
+  // 每一個員工有幾項工作(交集)?
+  1. inner join : "SELECT * From emp e inner join job j on e.eid = j.eid order by e.enam";
+  
+  2. 使用 count() : 
+       "SELECT  e.ename, count(j.jname) as total From emp e , job j where e.eid = j.eid group by e.ename order by e.ename";
+	   
+  // 每一個員工有幾項工作(left join 向左關聯)?
+  1. "select e.ename, count(j.jname) as total from emp e left join job j on e.eid = j.eid group by e.enameorder by e.ename";
+
+  // 沒有工作的員工
+  1. "select e.name From emp e left join job j on j.eid = e.eid where j.eid is null" 
+  
+  // 沒有員工的工作
+  1. "select j.jname from emp e right join job j on e.eid = j.eid  where j.eid is null;"
+
+  2. select j.jname from job j where j.eid is null;
+   
+  

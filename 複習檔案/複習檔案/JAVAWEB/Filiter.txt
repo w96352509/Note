@@ -1,0 +1,32 @@
+Filter 過濾器
+  可以擔任瀏覽器與JSP/Servlet之間的一個中介處理者，一些request的前置處理動作及一些response的後置處理，都可以交由這個中介處理者來完成
+  例如某些網頁都需要統一的身份驗證方式時，與其在每一個網頁中都撰寫驗證的程式碼，不如直接撰寫Filter，讓它來統一進行處理。
+
+使用方法 : 
+           class extend HttpFilter
+           向下 : chain.doFilter(req, res);
+
+配置方法
+ - web.xml
+ - @WebFiliter("")
+
+範例 :
+ - web.xml(越上面優先) :
+  <!-- 建立過濾器 -->
+    <filter>
+  	  <filter-name>名稱</filter-name>
+  	  <filter-class>packageName.ClassName</filter-class>
+    </filter>
+
+  <!-- 配置過濾器 -->  
+    <filter-mapping>
+  	  <filter-name>過濾器名稱</filter-name>
+  	  <url-pattern>要攔截的路徑</url-pattern>
+    </filter-mapping>
+
+範例總整 : 	
+  web.xml 配置 :
+   1. Servlet(FilterA / FilterB / FilterC ) + web.xml // 練習基礎 Filter 與順序排序
+  
+  @ 配置
+   1. LottoFilter  + LottServlet + LottoService + Lotto_form

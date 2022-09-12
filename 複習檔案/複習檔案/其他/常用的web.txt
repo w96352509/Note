@@ -1,0 +1,131 @@
+1. 請求(req)
+    1. req.setCharacterEncoding("UTF-8"); // 更改字元編碼
+	2. req.getParameter("")               // 得到 Html name
+	3. req.getParameterMap("")            // 得到 Html name 值集合
+	4. req.getParameterValues("")         // 得到 html name 支援陣列
+	5. req.getParameterNames()            // 得到 所有 html 值
+	6. req.getHeaderNames();              // 得到 所有標頭名稱(Enumeration<String>) 配合 .nextElement() 取各值
+	7. req.Header("")                     // 得到 標頭名稱內容值
+	8. req.setAttribute("名稱", 值);      // 設定新屬性給 jsp
+	9. RequestDispatcher rd = req.getRequestDispatcher("/WEB-INF/jsp/lotto_result.jsp"); // 重導
+	   rd.forward(req, resp);
+	10.req.getSession();                  // 得到 session  (false 登入獲取) / (true 登入存取[連續取用])  
+    11.req.getPathInfo();                 // 返回變數路徑名稱
+	12.req.getParts()   ;                 // Servlet3.0 新增處理檔案上傳處理
+
+2. 回應(resp)
+    1. resp.setCharacterEncoding("UTF-8");              // 更改字元編碼
+	2. resp.setContentType("text/html;charset=utf-8");  // 更改網頁類型 
+    3. Print out = res.getWrite();                      // 印出 
+    4. void setHeader(String name , String value);      // 新增 Header
+    5. setIntHeader  (String name , int value);         // 等多種設定
+    6. setDateHeader (String name , long date);	        // 新增 date Header
+	7. res.setStatus(int sc 狀態);                      // 設定網頁狀態
+	8. res.sendRedorect("URL");                         // 重導至某個網頁
+	9. res.sendError(res... , "錯誤訊息");              // 傳送指定錯誤碼給 Client
+	10.resp.getOutputStream();                          // 串流輸出 
+	
+	
+3. 其他
+    1.session.invalidate() // 強迫 session 失效
+    2.chain.doFilter       // 通過 Filiter
+
+3. JSP EL 語法
+    
+
+4. servlet req / resp 編碼改變
+    req.setCharacterEncoding("UTF-8");
+	res.setCharacterEncoding("UTF-8");
+	res.setContentType("text/html;charset=utf-8");
+
+5. 分析請求(BMI HttpServlet)
+    1. String height = req.getParameter("h");
+    2. Map<String, String[]> map = req.getParameterMap();
+	   String[] heights = map.get("h");
+	   String[] weights = map.get("w");
+	3. 第三種方式 (支援陣列)
+	   String[] heights = req.getParameterValues("h");
+	   String[] weights = req.getParameterValues("w");
+	4. 得到所有參數名
+	   Enumeration<String> names = req.getParameterNames();
+	   out.println("得到參數名稱:");
+	   while(names.hasMoreElements()) {
+		out.println(names.nextElement() + " ");
+	   }   
+
+6. 得到所有 Header 標頭名稱
+     Enumeration<String> headerNames = req.getHeaderNames(); 
+     String headerName  = headerNames.nextElement(); // 標頭名稱
+	 String headerValue = req.getHeader(headerName); // 標頭內容
+
+7. 取得 google Chrome 標頭 (TodayHeaderServlet.class)	 
+     String headerValue = req.getHeader("sec-ch-ua");
+     if(headerValue.contains("Google Chrome")) {
+			out.println("現在時刻: " + new Date());
+		} else {
+			out.println("請使用 Chrome 瀏覽器");
+		}
+
+8. 圖片呈現
+     resp.setContentType("image/png");
+	 File file = new File("圖片位置");
+	 ServletOutputStream out = resp.getOutputStream();
+	 Files.copy(file.toPath(), out);
+	 out.close();
+
+9. 初始化
+     舉例 : init(ServletConfig config) 是用於取得 web.xml 中的資訊 , 取得 sql 配置 
+     @Override
+	    public void init(ServletConfig config) throws ServletException {
+		  conn = ((Connection)config.getServletContext().getAttribute("conn"));
+	 }
+     舉例 : 初始化時新增物件(基本上都使用此方法)
+     @Override
+	   public void init() throws ServletException {
+		  lottoService = new LottoService();
+	   }     
+
+10. 串流發送並傳送
+    try(DataOutputStream oos = new DataOutputStream(conn.getOutputStream())) {
+		oos.write(postData);
+		oos.flush();
+	}
+
+11. 上傳檔案注意(使用 org.apache.commons.io.IOUtils;)
+    純文字 : req.getParts() -> 得到欄位名 -> 將串流轉 String 並編碼 
+    圖片檔 : req.getParts() -> 得到欄位名 -> 將 InputStream -> byte[] -> base64 字串
+---------------------------------------
+do..()多種寫法 : 使用 doHandle()
+ private void doHandle(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {}
+ doPost - > doHandle(req, resp);
+ doPut  - > doHandle(req, resp);
+
+---------------------------------------
+Servlet web.xml 配置
+ 1. <!-- 建立實體 -->
+     <servlet>
+	   <servlet-name>類別名稱</servlet-name>
+	   <servlet-class>完整類別名稱</servlet-class> // EX: servlet.名稱
+     </servlet>
+	
+ 2. <!-- 設定 URL 服務位置 -->
+     <servlet>
+	  <servlet-name>對應實體類別名稱</servlet-name>
+	  <url-pattern>設定 url pattern </url-pattern>
+    </servlet>
+--------------------------------------- 
+ 1. <!-- 建立過濾器 -->	
+     <filter>
+  	  <filter-name>類別名稱</filter-name>
+  	  <filter-class>filter.AreaFilterA</filter-class>
+     </filter>
+ 2. <!-- 配置過濾器 -->
+     <filter-mapping>
+  	  <filter-name>對應過濾器類別名稱</filter-name>
+  	  <url-pattern>設定 url pattern</url-pattern>
+     </filter-mapping>	 
+--------------------------------------- 
+ 設定 session 時間
+  <session-config>
+  	<session-timeout>1</session-timeout> // 分鐘
+  </session-config>

@@ -1,0 +1,143 @@
+0. Java 記憶體 : String pool / Stack pool / Heap
+1. String 類 session01 in spring.mvc.test 中練習  
+  概述 : 
+   String(字串) -> final 類 : 字串是常數，用雙引號引起來表示。他們的值在建立之後不能更改 
+    - 舉例 : String s3 = "abc"; s3+="def"; //abc 無改變 , 而是新增一個
+	- 記憶體位置 : String = "" / char[]  -> Heap
+	               String = new String() -> Stack pool -> Heap
+    - 比對 : ==(記憶體) / equals 內容
+	
+   String 與其他結構的轉換與基本資料型別，包裝類之間的轉換 :
+     -  String --> 基本資料型別，包裝類 :呼叫基本資料型別的 parseXxx（str）;
+	 -  基本資料型別，包裝類 ---> String :呼叫String類過載的 valueOf（xxx）; 或者直接+"
+     -  範例 : 
+	          String str = "123";
+			  int num = Integer.parseInt(str);   // str -> int
+			  String str1 = String.valueOf(num); // int -> str
+	 -  String 與 Char :
+              String --> char[] : toCharArray();
+              char[] --> String : new String(char[]);
+			  
+	 - String 與 byte : 
+              編碼：String --> byte[]:呼叫String的getBytes()
+              解碼：byte[] --> new String(byte[]);			  
+              編碼：字串   --> 位元組 （看得懂 --> 看不懂）
+			  解碼：編碼的逆過程 位元組 --> 字串 （看不懂的二進位制 --> 看得懂）
+	
+	- String、StringBuilder、StringBuffer三者異同？
+              String       ：不可變的字元序列 ,char型陣列儲存
+              StringBuffer ：可變的字元序列：執行緒安全，效率偏低，char型陣列儲存(長度為16的字串陣列)
+              StringBuilder：可變的字元序列：jdk5.0新增 執行緒不安全，效率高，char型陣列儲存 
+              三者效率：StringBuilder > StringBuffer > String		
+
+2. Date			  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   
+
+	
+-------------------------------------------------------------------------------------
+String 常用方法 : 
+/**
+ *  int length()：返回字串的長度： return value.length
+ *  char charAt(int index)： 返回某索引處的字元return value[index]
+ *  boolean isEmpty()：判斷是否是空字串：return value.length == 0
+ *  String toLowerCase()：使用預設語言環境，將 String 中的所有字元轉換為小寫
+ *  String toUpperCase()：使用預設語言環境，將 String 中的所有字元轉換為大寫
+ *  String trim()：返回字串的副本，忽略前導空白和尾部空白
+ *  boolean equals(Object obj)：比較字串的內容是否相同
+ *  boolean equalsIgnoreCase(String anotherString)：與equals方法類似，忽略大小寫
+ *  String concat(String str)：將指定字串連線到此字串的結尾。 等價於用「+」
+ *  int compareTo(String anotherString)：比較兩個字串的大小
+ *  String substring(int beginIndex)：返回一個新的字串，它是此字串的從
+ * beginIndex開始擷取到最後的一個子字串。
+ *  String substring(int beginIndex, int endIndex) ：返回一個新字串，它是此字
+ * 符串從beginIndex開始擷取到endIndex(不包含)的一個子字串。
+ *
+ *  boolean endsWith(String suffix)：測試此字串是否以指定的字尾結束
+ *  boolean startsWith(String prefix)：測試此字串是否以指定的字首開始
+ *  boolean startsWith(String prefix, int toffset)：測試此字串從指定索引開始的
+ * 子字串是否以指定字首開始
+ *
+ *  boolean contains(CharSequence s)：當且僅當此字串包含指定的 char 值序列時，返回 true
+ *  int indexOf(String str)：返回指定子字串在此字串中第一次出現處的索引
+ *  int indexOf(String str, int fromIndex)：返回指定子字串在此字串中第一次出
+ * 現處的索引，從指定的索引開始
+ *  int lastIndexOf(String str)：返回指定子字串在此字串中最右邊出現處的索引
+ *  int lastIndexOf(String str, int fromIndex)：返回指定子字串在此字串中最後一次出現處的索引，從指定的索引開始反向搜尋
+ * 注：indexOf和lastIndexOf方法如果未找到都是返回-1
+ *
+ *  String replace(char oldChar, char newChar)：返回一個新的字串，它是
+ * 通過用 newChar 替換此字串中出現的所有 oldChar 得到的。
+ *  String replace(CharSequence target, CharSequence replacement)：使
+ * 用指定的字面值替換序列替換此字串所有匹配字面值目標序列的子字串。
+ *  String replaceAll(String regex, String replacement) ： 使 用 給 定 的
+ * replacement 替換此字串所有匹配給定的正規表示式的子字串。
+ *  String replaceFirst(String regex, String replacement) ： 使 用 給 定 的
+ * replacement 替換此字串匹配給定的正規表示式的第一個子字串。
+ *
+ * boolean matches(String regex)：告知此字串是否匹配給定的正規表示式
+ *
+ *  String[] split(String regex)：根據給定正規表示式的匹配拆分此字串。
+ *  String[] split(String regex, int limit)：根據匹配給定的正規表示式來拆分此
+ * 字串，最多不超過limit個，如果超過了，剩下的全部都放到最後一個元素中。
+ * @author shc
+ * @create 2021-05-20 15:06
+ */
+-------------------------------------------------------------------------------------
+StringBuffer
+/*
+* StringBuffer類不同於String，其物件必須使用構造器生成。有三個構造器：
+    StringBuffer()：初始容量為16的字串緩衝區
+    StringBuffer(int size)：構造指定容量的字串緩衝區
+    StringBuffer(String str)：將內容初始化為指定字串內容
+常用方法
+    StringBuffer append(xxx)：提供了很多的append()方法，用於進行字串拼接
+    StringBuffer delete(int start,int end)：刪除指定位置的內容
+    StringBuffer replace(int start, int end, String str)：把[start,end)位置替換為str
+    StringBuffer insert(int offset, xxx)：在指定位置插入xxx
+    StringBuffer reverse() ：把當前字元序列逆轉
+*   public int indexOf(String str)
+    public String substring(int start,int end)
+    public int length()
+    public char charAt(int n )
+    public void setCharAt(int n ,char ch)
+*
+* 總結
+    * 增 append(x)
+    * 刪 delete(int start,int end)
+    * 改 setCharAt(int n,char ch) / repalce(int start,int end,String str)
+    * 查 charAt(int n)
+    * 插 insert(int offset,xxx)
+    * 長度 length()
+    * 遍歷 for()+charAt() / toString()
+*
+ */
+-------------------------------------------------------------------------------------
+Math
+常用方法 
+   pow(int , int); 平方 
+
+-------------------------------------------------------------------------------------
+File file = new File("path");
+Files.copy(file.toPath(), out); // (圖片來源端, 目的端)  
+
+                      
+ 

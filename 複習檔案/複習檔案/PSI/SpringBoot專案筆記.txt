@@ -1,0 +1,79 @@
+目錄 : SpringData JPA 關聯關係 / YML 語法 /Thymeleaf 
+
+ 0. YML 語法(取用 application.yml常用配置.txt) :
+      YAML基本語法
+        使用縮排表示層級關係
+        大小寫區分
+        key: value (注意「:」後有空格)
+      YAML 數據結構
+       字面值：鍵值與數值
+       物件：鍵值與數值的集合
+       數組陣列
+
+ 1. SpringData 關聯關係
+     - 透過 JPA 將 資料庫 映射到 Java 物件
+	 - 操作設定 :
+	     @Entity 映射實體
+		 @Table  映射表
+		 @Column 映射欄位
+		 @Id     映射主鍵               -> @GeneratedValue 標示符自動生成
+		 @JoinColumn 關聯欄             -> 通常用於多方 (@JoinColumn(name=""))
+		 @PrimaryKeyJoinColumn 主鍵關聯 -> 通常用於 1對1
+		 @JoinTable 關聯表的建立        -> 通常用於 多對多
+		 @OrderBy 排序                  -> ("id ASC")/("id DESC")
+     
+	 - 資料庫關聯關係 :
+         (多方(擁有方))•----◇(單方())  
+         • 表示外建使用他表主鍵
+         ◇ 表示外鍵不是使用他表主鍵 	 
+		  @OneToOne : 範本 Manager(被關聯方) ◇----• Department(管理方) 
+		    - Manager 
+			    @OneToOne(mappedBy = "manager")                               // 不維護關聯關係 , 由 Department 的 manager 來維護
+                @JsonIgnoreProperties("manager")
+				private Department department;
+          
+		    - Department
+		        @OneToOne(cascade = CascadeType.ALL)                          // 雙向關係需要聯級新增
+	            @JoinColumn(name = "manager_id" , referencedColumnName = "id")
+	            @JsonIgnoreProperties("department")
+	            private Manager manager;
+		  
+		    - AddTest
+			    因設定聯級新增只要 department 與 Manager 設定關聯只需 save department 則 Manager 也會保存 
+			
+		  @OneToMany
+            - 單向(只需管理方(自行選擇)操作) 
+			- 雙向 : MenuGroup(管理方) •----◇ MenuItem(被關聯方)    
+			    - MenuGroup :
+				    @OneToMany(mappedBy = "menuGroup") // 放棄維護
+	                private Set<MenuItem> items = new LinkedHashSet<>();
+				
+				- MenuItem : 
+ 				    @ManyToOne
+	                @JoinColumn(name = "group_id" , referencedColumnName = "id")
+	                private MenuGroup menuGroup;  
+			
+		   
+		   
+		  @ManyToOne : 同上
+		 
+          @ManyToMany(自行決定管理方) : Student / Course(管理方)
+		  
+		    - Student :
+			    @ManyToMany(mappedBy = "students")
+	            private Set<Course> courses = new LinkedHashSet<>();
+				
+			- Course	
+		        @ManyToMany
+	            @JoinTable(
+	               name = "course_student",
+	               joinColumns = @JoinColumn(name="course_id" , referencedColumnName = "id"),
+	               inverseJoinColumns = @JoinColumn(name="student_id" , referencedColumnName = "id")
+			              )
+	               private Set<Student> students = new LinkedHashSet<>();
+          
+		  @Transaction                   -> 交易進行
+         
+		  @JsonIgnorePropertie           -> 防止 json 生成遞迴資料
+
+ 

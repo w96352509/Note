@@ -1,0 +1,18 @@
+開發工具 : STS4
+開發環境 : Java11
+練習目標 : SpringData JPA / 自訂 Validator / Validator / session 基本應用 
+注意部分 :
+ 1. Entity    : String -> @NullEmpty 
+ 
+ 2. 自訂 Validator : @Component + implements Validator
+     -> return Entity.class.isAssignableFrom(clazz);
+	 -> 錯誤提示 : errors.rejectValue("對應前端", "name.Empty(隨便取)", "帳號密碼不可空白");
+	 -> Controller 呼叫 + @Autowrite , 錯誤用 BindingResult result 接收
+ 
+ 3. session : 強制清除 session -> session.invalidate();
+ 
+ 4. thymeleaf : 
+      表單綁定 : <form th:object="${}" th:action="@{}" th:method="${_method}" 
+	  取得綁定 : <th:field="*{..}"/>
+	  錯誤資訊 : <th:if="${#fields.hasErrors('*{}')}"> + <th:errors="*{..}">
+	  按鈕連結 : <a th:href="@{/login/add}" class="btn btn-primary">新建帳號</a>
