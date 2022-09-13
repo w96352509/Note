@@ -28,4 +28,29 @@ Form :
 		}
 	
 --------------------------------------------------------------------------- 
- 3. thymeleaf
+ 3. thymeleaf <html xmlns:th="http://www.thymeleaf.org">
+   0. <form th:action="@{}" th:object="${}" th:method="${_method}">
+   1. header 和 footer 標籤設定 : <header/footer xmlns:th="http://www.thymeleaf.org" th:fragment="header/footer">
+   2. 插入 header/footer : <div th:include="html名稱 :: 標籤名稱"></div>
+   3. 圖片掛入 :  <img class="img-fluid" th:src="@{/image/psi_table.png}">
+   4. 錯誤訊息 :  <span class="fieldError" th:if="${#fields.hasErrors('*{name}')}" th:errors="*{name}"></span>
+   5. JS 取得 thymeleaf 值 :  // 用於專案刪除提醒
+      <script th:inline="javascript">
+        var message = /*[[${message}]]*/ // 此行
+        console.log(message);
+        if(message != null){
+    	  alert(message);
+        }
+      </script> 
+
+   6. thymeleaf 取得 list 數量 : ${#lists.size()} // 配合 thymeleaf switch 顯示員工
+ 
+   7. thymeleaf switch : * 為預設
+      <span  th:switch="${#lists.size(dept.employees)}">
+        <span th:case="0">此員工尚有部門</span>
+         <span th:case="*">
+          <span th:each="e:${dept.employees}">
+           <a th:href="@{/employee/{id}(id=${e.id})}" th:text="${e.name}"></a>
+          </span>
+         </span>
+      </span> 
