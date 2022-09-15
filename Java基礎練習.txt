@@ -1,0 +1,260 @@
+Final、Finally、Finalize三者不同?
+  1. Final : 加在"變數"前該"變數"須為"常數(不變)" 
+             加在"方法"前則該方法不能被"覆寫"
+			 加在"類別"前則該類別不能被"繼承"
+			 
+  2. Finally : try{ }catch(Exception e){拋出例外執行}finally{必定執行}			 
+  
+  3. Finalize(沒用過):
+       finalize()其實是定義在java.lang.Object類別，所有的類別其頂層父類別一定是Object，所以其實你是在重新定義finalize()方法。
+       Object的finalize()什麼都沒作，其方法本體是空的。
+
+------------------------------------------------------------------------------------------------------------------	   
+String字串中== 與.equals不同?
+  1. == :     位址比對
+  2. equals : 內容比對
+  3. Java的字串有字串池機制(有相同先找相同) : String s1 = "A" , String s2 = "A" -> s1 == s2(true) / 用 new 宣告則 false
+
+------------------------------------------------------------------------------------------------------------------
+Arrays跟ArrayList的差異?
+  1. Arrays可包含原始(primitive)及物件(object)，ArrayList只允許物件
+  2. Arrays大小固定，ArrayList可以動態調整 -> Arrays : int[2] a = new int[]; / Arrays : List<String> a = new ArrayList<>();
+  3. ArrayList提供較多方法，如removeAll、iterator(迭代器) 
+
+------------------------------------------------------------------------------------------------------------------
+stack跟heap區別(除了範例沒用過)?
+  // 後進先出 , Stack 為堆疊
+  1. stack: 可被預測生命週期的變數或函數資訊都放在stack，例如區域變數(local variable)、
+            物件或陣列的返回位址(function/method return address)等資訊。
+  
+  // Heap 為堆積 , new 物件的存放位置就是 Heap (存放共享物件)
+  2. heap: 動態配置的記憶體空間，放置被new出來的物件以及內含的成員變數及方法
+
+------------------------------------------------------------------------------------------------------------------
+總結stack跟heap :
+  Stack 和 Heap 是 JVM 記憶體儲存資料或指令的區域。
+  
+  Java 的資料類型分為兩種：Primitive Type(基本 8 型態) 和 Class Type(String , Integer , Long 以及自行定義的類別)。
+                           int 、 short 、 long 、 byte 、 float 、 double 、 boolean 、 char
+  
+  Stack 存取速度快，但資料長度及生命週期必須是預知的，用來儲存區域變數、函式參數與函式返回位址等資料。
+  
+  Heap 是 Class Type 創建實例時存放資料的地方，在 Heap 創建完成後會回傳所在的記憶體位址。
+  
+  變數可能是 Primitive Type 或 Class / Reference Type 。若是 Primitive Type，則在 Stack 內的變數值為實際值；若是 Class / Reference Type，實例資料會儲存在 Heap 中，Stack 內的變數值為實例在 Heap 中的記憶體位址。
+ 
+ User user = new User("Mark"); 的行為簡單來說是：
+  i. 創建並儲存 User 實例 (name = Mark) 於 Heap 中。
+  ii. 儲存完成後，回傳資料所在的記憶體位址。
+  iii. 在 Stack 中新增變量 user。
+  iv. 將 ii. 所傳回的記憶體位址指定給 user 參考。
+
+------------------------------------------------------------------------------------------------------------------
+陣列有沒有length()這個方法? String有沒有length()這個方法?
+  1. String -> length()
+  2. Array  -> length
+
+------------------------------------------------------------------------------------------------------------------
+throw與throws的區別?
+  1. throws 通常放在方法後或可使用 try-catch
+  2. throw  放在方法中預先宣告可能會產生的例外 : throw new AuthException(); 
+
+------------------------------------------------------------------------------------------------------------------
+Int以及Integer何者會占用更多記憶體?
+  1. Integer = 物件 -> 存放內容 Heap 中 -> 址於 stack (多)
+  2. Int     = 內容 -> stack 中 (少)
+
+------------------------------------------------------------------------------------------------------------------  
+兩個相同的物件是否會擁有不同的hashcode(存放位置地所以值)?
+  1. 不會，根據hashcode這是不可能的  
+
+------------------------------------------------------------------------------------------------------------------
+a=a+b與a+=b的區別為何
+  1. a+=b 會先將資料型別提升至少至int型別  
+
+------------------------------------------------------------------------------------------------------------------
+是否能保證gc(Garbage Collector)的執行 // 沒實作用過
+  1. 要透過 System.gc()
+
+------------------------------------------------------------------------------------------------------------------
+抽象類別與介面有什麼區別?
+  1. 抽象方法可以提供類別繼承實作( java 只能單繼承)
+  2. 介面可以提供類類實作(java 可以多實作)  // 達到類似多重繼承效果
+
+------------------------------------------------------------------------------------------------------------------ 
+說明集合List與Set區別
+  1. List : 
+       1. 有順序性(索引值)
+       2. 可重複
+       3. ArrayList實作了List介面
+       4. ArrayList  : 插入、刪除速度慢，走訪速度快
+       5. LinkedList : 插入、刪除速度快，走訪速度慢，雙向連結  
+ 
+  2. Set :
+       1. 無順序性(搭配迭代器)
+       2. 不可重複、搜尋速度快
+       3. HashSet實作了Set介面
+       4. HashSet : 無順序性，查找速度快
+       5. LinkedHashSet : 有順序性
+       6. TreeSet : 有排序性(依字母)
+ 
+ 3. Map:
+       1. 有元素鍵值(Key-Value)，搜尋快
+       2. 元素可重複，鍵值如果重複新加入值會覆蓋舊有值
+       3. HashMap : 查找速度慢，插入刪除速度快
+       4. TreeMap : 有排序性 
+------------------------------------------------------------------------------------------------------------------
+例外相關問題
+  1.Throwable為所以例外的共同父類別(最大例外)
+  2.RuntimeException及其下方子族群為不一定要處理的例外，其他為一定要處理的例外
+  3.父類別必須至於子類別之後，否則會執行不到
+    程式設計師需要進行RuntimeCheck具體處理方式不一定
+    需要根據不同情況處理。
+
+------------------------------------------------------------------------------------------------------------------
+物件導向的特性
+
+  封裝
+  繼承
+  多型
+
+  封裝: private 物件 -> get/set  
+    資料隱藏、存取限制
+    封裝有助於提高系統安全性，可以把自己的資料和方法讓可以信任的類別或物件操作， 對於不可信任的類別可以做資訊的隱藏。 封裝使物件的設計者與物件的使用者分開。
+
+  四個存取修飾子:
+    private 該內別內部(最嚴謹)
+    default(預設) 同套件底下類別
+    protected 同套件底下及其子類別
+    public 所有類別
+  
+  繼承:(子類別可以使用父類別方法or覆寫)
+    建立一個新的類別時，可以從先前定義的類別中繼承資料和函式， 主要目的為提高程式的重複使用性。被繼承類別為父類別，繼承類別為子類別。
+    子類別繼承父類別後，可以加入新方法也可以Override
+    Java不支援多重繼承，一個子類別只能extends一個父類別。
+
+  多型: 
+    繼承是多型得以實現的基礎，多型是一種型別表現出多種狀態(BMW，AUDI)。
+    將一個方法呼叫同這個方法所屬的主體，關聯起來較做繫節，有分前期後期
+	class Animal -> void move(){}
+	Dog extends Animal / Bird extends Animal / Fish extends Animal
+	  Animal a =new Animal();
+      Animal b =new Dog();
+      Animal c =new Bird();
+      Animal d =new Fish();
+
+------------------------------------------------------------------------------------------------------------------
+值跟址意義 :
+  Java是Pass by Value傳值
+    pass-by-value的意思是將參數值複製後傳遞。(傳值)
+	pass-by-reference的意思是傳遞原本的參數值。(傳址)
+
+------------------------------------------------------------------------------------------------------------------
+1/0 , 0/0 ?
+  如果整數相除，分母為0會產生例外ArithmeticException ( 1/0 )
+  如果是浮點數，分母為0.0，不會有例外不會進到catch，結果為無窮 Infinite	( 1.0/0 )
+
+------------------------------------------------------------------------------------------------------------------
+執行續中同步是什麼意思?  
+  可使用 Synchronized 將執行續先鎖住須等執行完畢後才能取得執行權
+   1. 方法宣告中加入synchronized關鍵字 : public synchronized void ...() {}
+   2. 程式區塊以synchronized標示       : synchronized( 物件 ){}
+   3. 類別資料以synchronized標示       : 
+
+------------------------------------------------------------------------------------------------------------------
+IO四大父類別
+  Inputstream/Outputstream 以8bits為基礎，處理中文有困難
+  Reader/Writer 存取以16bits為基礎的Char來處理Unicode，JDK1.1後新增
+  總結 : 處理 bits 大小不同
+  
+  1. Inputstream  : 練習用過 : webupload 用於取得 Part 的 IO 轉 byte[] 改 base64 存圖片
+  2. Outputstream : 練習用過 : 取得 resp 的 ServletOutputStream out = resp.getOutputStream(); 
+  3. Reader       : 練習用過 : FileReader > FileReader inputStreamFile = new FileReader(""); // 讀取檔案
+  4. Writer       : 沒用過
+
+------------------------------------------------------------------------------------------------------------------  
+覆寫Overriding 過載Overloading的區別
+  1. Overriding 再繼承的情況下，子類別子類別將方法重寫，也是實現多型的必須步驟
+  2. Overloading 再同一個類別中定義了一個以上相同名稱但型購不同的方法。同一類別不允許定義多於 一個相同形構的方法。
+
+------------------------------------------------------------------------------------------------------------------
+MVC 是什麼?以及MVC架構的優點與缺點?
+  1. MVC是程式設計的一種架構方法，主要涵蓋模型（Model）、視圖（View）和控制器（Controller）。
+  2. @Controller 路徑與渲染器配置 : @GetMapping() 等 / Model model -> addAttribute 等資訊。     
+  3. Model : 邏輯 Service 等      : @Service 商業邏輯方法等
+  4. @Repository 取得資料庫       : 練習 : extends JpaRepository / jdbcTemplate
+  5. @Entity                      : 建立物件
+  6. View : thymeleaf  / JSP
+
+  優點
+    1.好維護、方便擴充
+    2.控制器與 Model 和 View 保持相對獨立，所以可以方便的改變應用程式的資料層和業務規則。
+    3.多個 View 能共享一個 Model，大幅度提高程式重複使用性。
+
+  缺點
+    1.開發時間長
+    2.分層細
+
+------------------------------------------------------------------------------------------------------------------  
+sendRedirect() 跟 forward(request,response)的差別
+
+  forward        -> get / return "" / RequestDispatcher rd = req.getRequestDispatcher(".jsp"); rd.forward(req, resp); /;
+    1.定義在RequestDispatcher的介面，由request.getRequestDispatcher呼叫
+    2.內部轉址,url不會顯示程式名稱(可設定成參數)
+    3.可透過setAttribute傳遞參數(因為是內部傳址)
+    4.效率高
+    5.適用於權限管理轉頁時使用
+
+  sendRedirect() -> update / deletet / add / return "redirect:./"; 配合 RedirectAttributesModelMap modelMap -> addFlashAttribute 
+    1.定義在HttpServletResponse
+    2.直接外部呼叫另一支程式，會顯示程式名稱
+    3.效率較低(因為client會在request一次)
+    4.適用於跳到外部網站或回主畫面使用
+
+------------------------------------------------------------------------------------------------------------------	
+JSP隱含物件有哪幾個
+9個
+1.out 物件
+    用途：標準輸出物件，將資料輸出至回應 client 之資料流
+    有效範圍：page
+    對應的servlet：javax.servlet.jsp.JspWriter
+
+2.request 物件
+    用途：取得 client 端資料的物件
+    有效範圍：request
+    對應的servlet：javax.servlet.ServletRequest.HttpServletRequest
+
+3.response 物件
+    用途：用於回應 client 端資料流的物件
+    有效範圍：page
+    對應的servlet：javax.servlet.ServletRequest.HttpServletResponse
+
+4.application 物件
+    用途：記錄與處理線上使用者共同的資料
+    有效範圍：application
+    對應的servlet：javax.servlet.ServletContext
+
+5.session 物件
+    用途：記錄與處理線上使用者個別的資料
+    有效範圍：session
+    對應的servlet：javax.servlet.http.HttpSession
+
+6.pageContext 物件
+    用途：存取 JSP 網頁於執行時期所需使用的屬性與方法
+    有效範圍：page
+    對應的servlet：javax.servlet.jsp.PageContext
+
+7.page 物件
+    用途：代表目前的這個 JSP 網頁物件
+    有效範圍：page
+    對應的servlet：java.lang.Object
+
+8.config 物件
+    用途：取得 JSP 編譯後 Servlet 的資訊
+    有效範圍：page
+    對應的servlet：javax.servlet.ServletConfig
+
+9.exception 物件
+    用途：例外處理機制
+    對應的servlet：java.lang.Throwable
+ 	
