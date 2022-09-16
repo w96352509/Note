@@ -173,17 +173,17 @@ IO四大父類別
   4. Writer       : 沒用過
 
 ------------------------------------------------------------------------------------------------------------------  
-覆寫Overriding 過載Overloading的區別
+覆寫Overriding 過載 Overloading 的區別
   1. Overriding 再繼承的情況下，子類別子類別將方法重寫，也是實現多型的必須步驟
   2. Overloading 再同一個類別中定義了一個以上相同名稱但型購不同的方法。同一類別不允許定義多於 一個相同形構的方法。
 
 ------------------------------------------------------------------------------------------------------------------
 MVC 是什麼?以及MVC架構的優點與缺點?
   1. MVC是程式設計的一種架構方法，主要涵蓋模型（Model）、視圖（View）和控制器（Controller）。
-  2. @Controller 路徑與渲染器配置 : @GetMapping() 等 / Model model -> addAttribute 等資訊。     
+  2. Controller 路徑與渲染器配置 : @GetMapping() 等 / Model model -> addAttribute 等資訊。     
   3. Model : 邏輯 Service 等      : @Service 商業邏輯方法等
   4. @Repository 取得資料庫       : 練習 : extends JpaRepository / jdbcTemplate
-  5. @Entity                      : 建立物件
+  5. @Entity                      : 物件
   6. View : thymeleaf  / JSP
 
   優點
@@ -257,4 +257,48 @@ JSP隱含物件有哪幾個
 9.exception 物件
     用途：例外處理機制
     對應的servlet：java.lang.Throwable
- 	
+
+------------------------------------------------------------------------------------------------------------------
+JSP :
+  1. 生命週期 : .jsp -> .java -> .class -> 建立 servlet 實體 in Web Container 
+                     -> jspInit()    : 初始化在 .jsp 的 <%! public void jspInit(){} %> 中
+					 -> jspService() :          .jsp 的 <%  ... %> 中
+					 -> jspDestory() : 銷毀方法 .jsp 的 <%! public void jspDestory(){} %> 中
+  2. JSP 語法 :
+       1. Comment(註解) : 單<%// ... %> / 多<%* ... */%>  
+	   
+	   2. Directive(指令) : <%@ ... %>
+	        -> page    : <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+			-> include : <%@ include file ="Include.html" %>
+			-> taglib  : <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+	   
+       3. Declarations(宣告) : <%! ... %> // 定義變數 , 方法等	
+
+       4. Scriptlets(程式片段) : <% ... %>	
+
+       5. Expression(精簡表達) : <%= ...%>  // 沒用過	   
+                
+       6. Action(命令)         : <jsp: XXX /> // include / forward / useBean / set&getProperty / plugin  // 沒用過      
+
+   3. JSP 綁定表單 : <%@ taglib prefix="spform" uri="http://www.springframework.org/tags/form" %>
+        <spform:form 
+				method="post" 
+				modelAttribute="employee" -> @Controller : @ModelAttribute Employee employee
+				action="${ pageContext.request.contextPath}/mvc/jdbc/employee/">
+		
+		<spform:input path="eid" readonly="true"/> <p/>	// path= id , name	
+
+
+------------------------------------------------------------------------------------------------------------------
+Spring :
+  1. 優點 : 
+       非侵入式設計 : POJO + 透過 xml 管理和配置( web.xml , springmvc-servlet.xml)  
+  
+  2. 一站式 Web : 表現層(Web) / 業務層(Service) / 資料訪問層(Dao)
+
+  3. Spring 模組 : AOP攔截器 / ORM / DAO / Web / Context / MVC / Spring Core
+
+  4. 輕量級框架 :
+       1. DI 依賴注入 : 建構子注入 / setter
+       2. IOC 反轉    : 透過第三方呼叫 // 配置檔幫忙呼叫 : applicationContext.xml or @Configuration 的 .java
+       3. AOP 	   
