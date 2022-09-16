@@ -3,7 +3,8 @@
  
  主 Web 練習 : JavaWeb-20220803Home(複習) , JavaWeb20220418(上課)
  
- spring 專案複習 : 20220905PSI(上課用) -> PSI-SpringBoot-2022(加強版) -> SpringMVC20220722Home(session13)
+ spring 專案複習 : 20220905PSI(上課用) -> PSI-SpringBoot-2022(加強版) / SpringMVC20220722Home(session13)
+                  SpringBoot-Portfolio-20211018(舊版) / PSI-SpringBoot-2022(舊版)
  
  spring(cloud 等) 進階 11 月開始
  
