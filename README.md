@@ -5,8 +5,8 @@
  
  spring 專案複習 : 20220905PSI(上課用) -> PSI-SpringBoot-2022(加強版) -> SpringMVC20220722Home(session13)
  
- spring 進階 11 月開始
+ spring(cloud 等) 進階 11 月開始
  
- Java 基本練習重整 10 月開始
+ Java11 基本練習重整 10 月開始
  
- 複習檔 : Note 紀錄筆記 , springMVC-
+ 複習檔 : Note 紀錄筆記(txt 檔就丟這) , springMVC-(想亂寫時丟這)
