@@ -11,15 +11,14 @@ DB       : mysql
 							   repository
 							   validator	
 
-** 防範同供應商採購 -> purchaseItem(未實作)								  
-
-
 進度(9/13) : index + header + footer + Department + Employee
 進度(9/17) : supplier + product(line 傳送訊息) + purchase +防止刪除機制
 
-
+-------------------------------------------------------------------------------------------------------------------
 重要 : <input type="hidden" th:field="*{id}" /> // 讓綁定物件取得 id
 
+
+-------------------------------------------------------------------------------------------------------------------
 thymeleaf 外掛 :
  1. thymeleaf : <html xmlns:th="http://www.thymeleaf.org">
 
@@ -54,6 +53,17 @@ thymeleaf 功能 :
  9. th:utext // 可使用 html 標籤
  
  10. 日期format : th:value="${#dates.format(#dates.createNow(), 'yyyy-MM-dd')}"
+ 
+ 11. googleChar :
+      var data = google.visualization.arrayToDataTable([ // 固定
+        ['Name', '進貨量'],                           // key and Value
+        
+        /*[# th:each="row : ${inventories}"]*/
+        
+        ['[[${row.name}]]', [[${row.amount1}]]],
+        
+        /*[/]*/
+       ]);		
 -------------------------------------------------------------------------------------------------------------------
 前端實作注意:
  1. index.html -> 圖片配合 css -> <img class="img-responsive" th:src="@{/image/psi_table.png}">
@@ -140,17 +150,55 @@ thymeleaf 功能 :
         ---------------------------------------------------------------------*/
 
 3. view 建立 -> interface Inventory : 用於取得商品各內容
+     Long getId();
+	 String getName();
+	 Integer getCost();
+	 Integer getPrice();
+	 Integer getAmount1();  // 進貨數量
+	 Integer getAmount2();  // 銷售數量
 
 4. product 使用自訂 Query : 
      - List<Inventory> queryInventories();   // 尋找全商品的資訊 + 進貨數量 + 銷售數量
      - Inventory findInventoryById(Long id); // 商品的資訊 + 進貨數量 + 銷售數量 by id
+	 - sql : select p.id , p.name , p.cost , p.price ,
+	        (select sum(amount) form purchase_item WHERE product_id = p.id limit 1 ) as amount1 ,
+	        (select sum(amount) form order_item    WHERE product_id = p.id limit 1)  as amount2 ,
+			 FROM product p (where p.id=:id)
+	 
  
 5. InventoryValidator (配合 OrderItem 購買比對 PurchaseItem ) 
+     - implements Validator(springframework.validation.Validator)
+     - @Override
+	     
+		 1. supports(Class<?> clazz) -> return OrderItem.class.isAssignableFrom(clazz);
+		 
+		 2. validate(Object target, Errors errors) -> {
+		    
+		      1. OrderItem orderItem = (OrderItem)target;  // 驗證物件
+			  
+			  2. if(購買數量 == 0 or == null) -> errors.rejectValue("amount", "order_item.amount.required", "請輸入正確數量");
+			  
+			  3. else{ 
+			       
+				   1. 取得購買清單購買的商品資訊 :
+				      Inventory inventory = productRepository.findInventoryById(orderItem.getProduct().getId()); 
+					
+                   2. int remaining = 0; // 預設目前庫存
+
+                   3. 設定庫存 : if(銷售量 == 0) -> remaining = 進貨量
+                                 else            -> remaining = 進貨量 - 銷售量
+                                 if(購買量 > remaining) -> errors.rejectValue("amount", "inventory.amount.insufficient", "目前庫存數量不足（庫存：" + remaining + "）");
+             		}
+			      }catch   
+                   errors.rejectValue("amount", "inventory.amount.error", "此商品無進貨資料無法計算庫存");
+
+6. validator 套入 OrderItem addItem -> inventoryValidator.validate(orderItem, result); // 前端記得顯示錯誤				   
+
 
 -------------------------------------------------------------------------------------------------------------------
 JPA 自加方法 :
 範例 :
-    @Query(value = "SELECT a FROM Asset a WHERE a.invid = ?1")
+    @Query(nativeQuery = true , value = "SELECT a FROM Asset a WHERE a.invid = ?1")
     public List<Asset> findByInvid(@Param("invid") Integer invid);
 
 -------------------------------------------------------------------------------------------------------------------
@@ -262,4 +310,218 @@ HTML 模板(purchaseItem / OrderItem) :
  <!-- footer區 -->
  <th:block th:include="./include/footer :: footer"></th:block>
 </body>
+</html>
+
+-------------------------------------------------------------------------------------------------------------------
+View 模板 :
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>SupplierPage</title>
+<script th:inline="javascript">
+   
+ </script>
+
+ <!-- Header 區 -->
+ <th:block th:include="./include/header :: header"></th:block>
+</head>
+<body>
+ <!-- 選單區 -->
+ <th:block th:include="./include/navbar :: navbar"></th:block>
+ 
+ <!-- Context區 -->
+ 
+ <div class="container my-2">
+  <h1>Inventory 頁面</h1>
+  <h1>商品動態庫存資料檢視</h1>
+		
+		<table border="1" class="table table-striped table-responsive-md">
+			<thead>
+				<tr>
+					<th>序號</th>
+					<th>商品名稱</th>
+					<th>商品成本</th>
+					<th>商品售價</th>
+					<th>採購數量</th>
+					<th>銷售數量</th>
+					<th>剩餘數量</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="inventory : ${inventories}">
+					<td th:text="${inventory.id}"></td>
+					<td th:text="${inventory.name}"></td>
+					<td th:text="${inventory.cost}"></td>
+					<td th:text="${inventory.price}"></td>
+					<td>
+					 <span th:switch="${inventory.amount1}">
+					  <span th:case= null >0</span>
+					  <span th:case="*">
+					   <font th:text="${inventory.amount1}"></font>
+					  </span>
+					 </span>
+					</td>
+					<td>
+					 <span th:switch="${inventory.amount2}">
+					  <span th:case= null >0</span>
+					  <span th:case="*">
+					   <font th:text="${inventory.amount2}"></font>
+					  </span>
+					 </span>
+					</td>
+					<td>
+					 <span th:if="${inventory.amount2} == null">
+					  <font th:text="${inventory.amount1}"></font>
+					 </span>
+					 <span th:if="${inventory.amount2} != null">
+					  <font th:text="${inventory.amount1 - inventory.amount2}"></font>
+					 </span>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+ </div>
+ <!-- footer區 -->
+ <th:block th:include="./include/footer :: footer"></th:block>
+</body>
+</html>
+-------------------------------------------------------------------------------------------------------------------
+Thy googleChart
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>SupplierPage</title>
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+
+<script type="text/javascript" th:inline="javascript"> 
+google.charts.load('current', {'packages':['corechart']}); // 固定
+google.charts.setOnLoadCallback(drawChart);                // 固定
+
+
+function drawChart() {
+	OrderItemAmount(1); // 銷售
+	PurchaseItemAmount(1);
+}
+
+
+function OrderItemAmount(chartId) {
+	var data = google.visualization.arrayToDataTable([ // 固定
+        ['Name', '銷售量'],                           // key and Value
+        
+        /*[# th:each="row : ${inventories}"]*/
+        
+        ['[[${row.name}]]', [[${row.amount2}]]],
+        
+        /*[/]*/
+    ]);
+    
+	var options = {
+		title: '銷售量'                                // 標題
+	};
+	
+	var chart = new google.visualization.BarChart(document.getElementById('piechart'));
+	switch(chartId) {
+	case 2:
+		chart = new google.visualization.PieChart(document.getElementById('piechart'));
+		break;
+	case 3:
+		chart = new google.visualization.ColumnChart(document.getElementById('piechart'));
+		break;
+	case 4:
+		chart = new google.visualization.LineChart(document.getElementById('piechart'));
+		break;	
+    }
+
+       chart.draw(data, options);
+	
+}  
+
+function PurchaseItemAmount(chartId) {
+	var data = google.visualization.arrayToDataTable([ // 固定
+        ['Name', '進貨量'],                           // key and Value
+        
+        /*[# th:each="row : ${inventories}"]*/
+        
+        ['[[${row.name}]]', [[${row.amount1}]]],
+        
+        /*[/]*/
+    ]);
+    
+	var options = {
+		title: '進貨量'                                // 標題
+	};
+	
+	var chart = new google.visualization.BarChart(document.getElementById('piechart2'));
+	switch(chartId) {
+	case 2:
+		chart = new google.visualization.PieChart(document.getElementById('piechart2'));
+		break;
+	case 3:
+		chart = new google.visualization.ColumnChart(document.getElementById('piechart2'));
+		break;
+	case 4:
+		chart = new google.visualization.LineChart(document.getElementById('piechart2'));
+		break;	
+    }
+
+       chart.draw(data, options);
+	
+}  
+
+</script>
+
+<!-- Header 區 -->
+<th:block th:include="./include/header :: header"></th:block>
+</head>
+<body>
+	<!-- 選單區 -->
+	<th:block th:include="./include/navbar :: navbar"></th:block>
+
+	<!-- Context區 -->
+
+
+	<body>
+	<h1>Google Charts With Thymeleaf</h1>
+      
+	 <td valign="top">
+				<form class="pure-form">
+					<fieldset>
+						<legend>
+							Order Chart |
+							<a href="#" onclick="OrderItemAmount(1)">bar</a> |
+							<a href="#" onclick="OrderItemAmount(2)">pie</a> |
+							<a href="#" onclick="OrderItemAmount(3)">column</a> |
+							<a href="#" onclick="OrderItemAmount(4)">line</a>
+						</legend>
+						<div id="piechart" style="width: 500px; height: 300px;"></div>
+					</fieldset>
+				</form>
+	  </td>	
+	  
+	  <td valign="top">
+				<form class="pure-form">
+					<fieldset>
+						<legend>
+							Purchase Chart |
+							<a href="#" onclick="PurchaseItemAmount(1)">bar</a> |
+							<a href="#" onclick="PurchaseItemAmount(2)">pie</a> |
+							<a href="#" onclick="PurchaseItemAmount(3)">column</a> |
+							<a href="#" onclick="PurchaseItemAmount(4)">line</a>
+						</legend>
+						<div id="piechart2" style="width: 500px; height: 300px;"></div>
+					</fieldset>
+				</form>
+	  </td>		
+	  		
+	</body>
+    
+    <!-- footer區 -->
+	<th:block th:include="./include/footer :: footer"></th:block>
+</body>
+
 </html>

@@ -54,3 +54,5 @@ Form :
           </span>
          </span>
       </span> 
+	  
+  8. google Chart + thymeleaf -> 其他功能 googleChar.txt	  

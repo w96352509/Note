@@ -36,7 +36,7 @@
         		break;	
         }
         
-        chart.draw(data, options);
+               chart.draw(data, options);
     } 
 
  3. HTML
@@ -106,3 +106,15 @@
 					</fieldset>
 				</form>
 			</td>  
+
+--------------------------------------------------------------------------------------------
+Thymealf :
+var data = google.visualization.arrayToDataTable([ // 固定
+        ['Name', '進貨量'],                           // key and Value
+        
+        /*[# th:each="row : ${inventories}"]*/
+        
+        ['[[${row.name}]]', [[${row.amount1}]]],
+        
+        /*[/]*/
+    ]);			
