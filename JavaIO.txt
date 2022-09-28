@@ -1,0 +1,38 @@
+Java I/O :
+  範本 : in SpringBoot-PSI-2022 -> DesignPattern -> session03 -> IO 
+
+  1. 裝飾者模式一種 :
+       舉例 :
+	     1. LineNumberInputStream 是 "裝飾者" + 計算行數功能
+		 2. BufferInputStream     是 "裝飾者" + 利用 Buffer 增強效率 + 提供 readLine() 方法讀取1行文字
+		 3. FilterInputStream     是 "被裝飾者"
+
+  2. Java.io 類 :
+       頂     : InPutStream() // 抽象元件
+       
+	   實踐類 : FilterInputStream / StringBufferInputStream / ByteArrayInputStream / FilterInputStream(抽象)
+       
+       FilterInputStream 實踐類 : PushbackInputStream / BufferInputStream / DataInputStream / LineNumberInputStream	   
+	   
+  3. 範本 : 讀取後大轉小
+              
+       class :
+	     LowerCaseInputStream extends FilterInputStream // 所有輸入流的抽象類別
+	       -> public LowerCaseInputStream(InputStream in) { super(in) } // 存取父類別的成員
+           -> 實踐讀取(read)方法 
+                0. read()     : 可當成把 串流 轉 ascii 字元 , 不在有數據可用 return -1
+				
+				0. read(b, off, len) : 可當成把 串流 轉 ascii 字元 , 回傳總長度
+				
+				1. 普通(char) : read(){ int c = super.read(); return (c==-1? c : Character.toLowerCase((char)c)); }
+                
+				2. Byte       :	read(byte[] b, int off, int len){
+				                  1. int result = super.read(b, off, len); 
+								  2. for(int i = off ; i <off+result ; i++) {b[i] = (byte)Character.toLowerCase((byte)b[i]);}
+								  3. return result;
+				                }			
+       Main :
+         -> 普通參考 : https://github.com/w96352509/PSI-SpringBoot-2022/blob/master/SpringBoot-PSI-2022/src/test/java/com/study/springmvc/DesignPattern/session03/IO/Main.java 
+		 
+		 -> byte參考 : https://github.com/w96352509/PSI-SpringBoot-2022/blob/master/SpringBoot-PSI-2022/src/test/java/com/study/springmvc/DesignPattern/session03/IO/Main2.java
+       		 
