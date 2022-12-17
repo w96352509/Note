@@ -8,7 +8,7 @@
 Spring 由來
   - J2EE -> Spring
   - 2002 -> Spring    + Hibernate (ORM框架)
-         -> Struts    + Spring + Hibernate (組合已死) 
+         -> Struts    + Spring + Hibernate 
   - 後續 -> SpringMVC + spring + Hibernate or MyBaits or Spring JPA
   - 2021 -> SpringBoot(把原要設定改成預設值)  
   
